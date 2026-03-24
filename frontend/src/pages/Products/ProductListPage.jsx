@@ -4,12 +4,15 @@ import Table from '../../components/common/Table';
 import Modal from '../../components/common/Modal';
 import './ProductListPage.css';
 
+const PAGE_SIZE = 10;
+
 const ProductListPage = () => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentProduct, setCurrentProduct] = useState(null);
+  const [page, setPage] = useState(1);
   const [formData, setFormData] = useState({
     nombre: '',
     descripcion: '',
@@ -113,6 +116,16 @@ const ProductListPage = () => {
     product.descripcion.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  const totalPages = Math.max(1, Math.ceil(filteredProducts.length / PAGE_SIZE));
+  const start = (page - 1) * PAGE_SIZE;
+  const pagedProducts = filteredProducts.slice(start, start + PAGE_SIZE);
+
+  useEffect(() => {
+    if (page > totalPages) {
+      setPage(totalPages);
+    }
+  }, [totalPages, page]);
+
   const columns = [
     { key: 'id', header: 'ID' },
     {
@@ -175,17 +188,36 @@ const ProductListPage = () => {
             className="form-input"
             placeholder="Buscar productos..."
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={(e) => {
+              setSearchTerm(e.target.value);
+              setPage(1);
+            }}
             style={{ maxWidth: '300px' }}
           />
         </div>
 
         <Table
           columns={columns}
-          data={filteredProducts}
+          data={pagedProducts}
           onEdit={handleOpenModal}
           onDelete={handleDelete}
         />
+
+        {filteredProducts.length > 0 && (
+          <div style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 0' }}>
+            <span style={{ color: '#7f8c8d' }}>
+              Página {page} de {totalPages}
+            </span>
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <button className="btn btn-secondary" disabled={page === 1} onClick={() => setPage(page - 1)}>
+                Anterior
+              </button>
+              <button className="btn btn-secondary" disabled={page === totalPages} onClick={() => setPage(page + 1)}>
+                Siguiente
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       <Modal

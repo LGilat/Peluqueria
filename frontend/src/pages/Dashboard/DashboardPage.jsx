@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import axiosClient from '../../api/axiosClient';
 
 const DashboardPage = () => {
@@ -11,6 +12,8 @@ const DashboardPage = () => {
     totalClients: 0,
     monthlyIncome: 0
   });
+
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchData();
@@ -72,7 +75,9 @@ const DashboardPage = () => {
           <h2>Bienvenido</h2>
           <p style={{ color: '#7f8c8d' }}>Resumen de tu negocio</p>
         </div>
-        <button className="btn btn-primary">+ Nueva Reserva</button>
+        <button className="btn btn-primary" onClick={() => navigate('/reservations?new=1')}>
+          + Nueva Reserva
+        </button>
       </div>
 
       <div className="dashboard-grid">
@@ -160,7 +165,11 @@ const DashboardPage = () => {
                       </p>
                     </div>
                   </div>
-                  <button className="btn btn-secondary" style={{ padding: '6px 12px', fontSize: '0.8rem' }}>
+                  <button
+                    className="btn btn-secondary"
+                    style={{ padding: '6px 12px', fontSize: '0.8rem' }}
+                    onClick={() => navigate(`/reservations?new=1&service=${service.id}`)}
+                  >
                     Reservar
                   </button>
                 </div>

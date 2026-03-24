@@ -3,12 +3,15 @@ import { useNavigate } from 'react-router-dom';
 import axiosClient from '../../api/axiosClient';
 import Modal from '../../components/common/Modal';
 
+const PAGE_SIZE = 10;
+
 const ClientListPage = () => {
   const [clients, setClients] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentClient, setCurrentClient] = useState(null);
+  const [page, setPage] = useState(1);
   const [formData, setFormData] = useState({
     nombre: '',
     apellido: '',
@@ -104,6 +107,16 @@ const ClientListPage = () => {
     client.email.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  const totalPages = Math.max(1, Math.ceil(filteredClients.length / PAGE_SIZE));
+  const start = (page - 1) * PAGE_SIZE;
+  const pagedClients = filteredClients.slice(start, start + PAGE_SIZE);
+
+  useEffect(() => {
+    if (page > totalPages) {
+      setPage(totalPages);
+    }
+  }, [totalPages, page]);
+
   if (loading) {
     return <div className="loading">Cargando clientes...</div>;
   }
@@ -124,7 +137,10 @@ const ClientListPage = () => {
             className="form-input"
             placeholder="Buscar clientes..."
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={(e) => {
+              setSearchTerm(e.target.value);
+              setPage(1);
+            }}
             style={{ maxWidth: '300px' }}
           />
         </div>
@@ -139,19 +155,21 @@ const ClientListPage = () => {
             <span>Acciones</span>
           </div>
 
-          {filteredClients.map((client) => (
-            <div key={client.id} className="item-row" style={{ display: 'grid', gridTemplateColumns: '2fr 2fr 1fr 1fr 1fr 1fr' }}>
+          {pagedClients.map((client) => (
+            <div key={client.id} className="item-row" style={{ display: 'grid', gridTemplateColumns: '2fr 2fr 1fr 1fr 1fr 1fr', alignItems: 'center' }}>
               <span style={{ fontWeight: '500' }}>{client.nombre} {client.apellido}</span>
               <span>{client.email}</span>
               <span>{client.telefono}</span>
               <span>${parseFloat(client.gasto_acumulado || 0).toFixed(2)}</span>
-              <button
-                className="btn btn-secondary"
-                style={{ padding: '4px 8px', fontSize: '0.8rem' }}
-                onClick={() => navigate(`/clients/${client.id}`)}
-              >
-                Ver
-              </button>
+              <span>
+                <button
+                  className="btn btn-secondary"
+                  style={{ padding: '4px 8px', fontSize: '0.8rem', width: 'fit-content' }}
+                  onClick={() => navigate(`/clients/${client.id}`)}
+                >
+                  Ver
+                </button>
+              </span>
               <span>
                 <button
                   className="btn btn-secondary"
@@ -176,6 +194,22 @@ const ClientListPage = () => {
           <p style={{ padding: '30px', textAlign: 'center', color: '#7f8c8d' }}>
             No se encontraron clientes
           </p>
+        )}
+
+        {filteredClients.length > 0 && (
+          <div style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 0' }}>
+            <span style={{ color: '#7f8c8d' }}>
+              Página {page} de {totalPages}
+            </span>
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <button className="btn btn-secondary" disabled={page === 1} onClick={() => setPage(page - 1)}>
+                Anterior
+              </button>
+              <button className="btn btn-secondary" disabled={page === totalPages} onClick={() => setPage(page + 1)}>
+                Siguiente
+              </button>
+            </div>
+          </div>
         )}
       </div>
 

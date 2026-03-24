@@ -1,8 +1,11 @@
 import { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import axiosClient from '../../api/axiosClient';
 import Table from '../../components/common/Table';
 import Modal from '../../components/common/Modal';
 import './ReservationListPage.css';
+
+const PAGE_SIZE = 10;
 
 const ReservationListPage = () => {
   const [reservations, setReservations] = useState([]);
@@ -13,6 +16,7 @@ const ReservationListPage = () => {
   const [clients, setClients] = useState([]);
   const [staff, setStaff] = useState([]);
   const [services, setServices] = useState([]);
+  const [page, setPage] = useState(1);
   const [formData, setFormData] = useState({
     cliente: '',
     servicio: '',
@@ -24,12 +28,28 @@ const ReservationListPage = () => {
     motivo_cancelacion: ''
   });
 
+  const [searchParams, setSearchParams] = useSearchParams();
+
   useEffect(() => {
     fetchReservations();
     fetchClients();
     fetchStaff();
     fetchServices();
   }, []);
+
+  useEffect(() => {
+    const shouldOpen = searchParams.get('new') === '1';
+    if (shouldOpen) {
+      const serviceId = searchParams.get('service');
+      handleOpenModal();
+      if (serviceId) {
+        setFormData((prev) => ({ ...prev, servicio: serviceId }));
+      }
+      searchParams.delete('new');
+      searchParams.delete('service');
+      setSearchParams(searchParams);
+    }
+  }, [searchParams, setSearchParams]);
 
   const fetchReservations = async () => {
     try {
@@ -160,6 +180,16 @@ const ReservationListPage = () => {
     );
   });
 
+  const totalPages = Math.max(1, Math.ceil(filteredReservations.length / PAGE_SIZE));
+  const start = (page - 1) * PAGE_SIZE;
+  const pagedReservations = filteredReservations.slice(start, start + PAGE_SIZE);
+
+  useEffect(() => {
+    if (page > totalPages) {
+      setPage(totalPages);
+    }
+  }, [totalPages, page]);
+
   const columns = [
     { key: 'id', header: 'ID' },
     {
@@ -224,17 +254,36 @@ const ReservationListPage = () => {
             className="form-input"
             placeholder="Buscar reservas..."
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={(e) => {
+              setSearchTerm(e.target.value);
+              setPage(1);
+            }}
             style={{ maxWidth: '300px' }}
           />
         </div>
 
         <Table
           columns={columns}
-          data={filteredReservations}
+          data={pagedReservations}
           onEdit={handleOpenModal}
           onDelete={handleDelete}
         />
+
+        {filteredReservations.length > 0 && (
+          <div style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 0' }}>
+            <span style={{ color: '#7f8c8d' }}>
+              Página {page} de {totalPages}
+            </span>
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <button className="btn btn-secondary" disabled={page === 1} onClick={() => setPage(page - 1)}>
+                Anterior
+              </button>
+              <button className="btn btn-secondary" disabled={page === totalPages} onClick={() => setPage(page + 1)}>
+                Siguiente
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       <Modal
