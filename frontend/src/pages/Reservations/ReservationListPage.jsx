@@ -20,7 +20,8 @@ const ReservationListPage = () => {
     hora: '',
     estado: 'pendiente',
     observaciones: '',
-    atendente: ''
+    atendente: '',
+    motivo_cancelacion: ''
   });
 
   useEffect(() => {
@@ -83,7 +84,8 @@ const ReservationListPage = () => {
         hora: reservation.hora || '',
         estado: reservation.estado || 'pendiente',
         observaciones: reservation.observaciones || '',
-        atendente: reservation.atendente || ''
+        atendente: reservation.atendente || '',
+        motivo_cancelacion: reservation.motivo_cancelacion || ''
       });
     } else {
       setCurrentReservation(null);
@@ -94,7 +96,8 @@ const ReservationListPage = () => {
         hora: '',
         estado: 'pendiente',
         observaciones: '',
-        atendente: ''
+        atendente: '',
+        motivo_cancelacion: ''
       });
     }
     setIsModalOpen(true);
@@ -185,6 +188,11 @@ const ReservationListPage = () => {
           {value}
         </span>
       )
+    },
+    {
+      key: 'recordatorio_enviado',
+      header: 'Recordatorio',
+      render: (value) => (value ? 'Sí' : 'No')
     },
     {
       key: 'atendente',
@@ -309,6 +317,19 @@ const ReservationListPage = () => {
               <option value="cancelada">cancelada</option>
             </select>
           </div>
+
+          {formData.estado === 'cancelada' && (
+            <div className="form-group">
+              <label>Motivo de cancelación</label>
+              <textarea
+                name="motivo_cancelacion"
+                value={formData.motivo_cancelacion}
+                onChange={handleInputChange}
+                rows="2"
+                className="form-input"
+              />
+            </div>
+          )}
 
           <div className="form-group">
             <label>Atendente</label>

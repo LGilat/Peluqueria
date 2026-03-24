@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import axiosClient from '../../api/axiosClient';
 import Modal from '../../components/common/Modal';
 
@@ -16,6 +17,8 @@ const ClientListPage = () => {
     direccion: '',
     preferencias: ''
   });
+
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchClients();
@@ -127,20 +130,28 @@ const ClientListPage = () => {
         </div>
 
         <div className="item-list">
-          <div style={{ display: 'grid', gridTemplateColumns: '2fr 2fr 1fr 1fr 1fr', padding: '10px 0', borderBottom: '2px solid var(--border-color)', fontWeight: '600', color: '#7f8c8d' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '2fr 2fr 1fr 1fr 1fr 1fr', padding: '10px 0', borderBottom: '2px solid var(--border-color)', fontWeight: '600', color: '#7f8c8d' }}>
             <span>Nombre</span>
             <span>Email</span>
             <span>Teléfono</span>
             <span>Gasto</span>
+            <span>Historial</span>
             <span>Acciones</span>
           </div>
 
           {filteredClients.map((client) => (
-            <div key={client.id} className="item-row" style={{ display: 'grid', gridTemplateColumns: '2fr 2fr 1fr 1fr 1fr' }}>
+            <div key={client.id} className="item-row" style={{ display: 'grid', gridTemplateColumns: '2fr 2fr 1fr 1fr 1fr 1fr' }}>
               <span style={{ fontWeight: '500' }}>{client.nombre} {client.apellido}</span>
               <span>{client.email}</span>
               <span>{client.telefono}</span>
               <span>${parseFloat(client.gasto_acumulado || 0).toFixed(2)}</span>
+              <button
+                className="btn btn-secondary"
+                style={{ padding: '4px 8px', fontSize: '0.8rem' }}
+                onClick={() => navigate(`/clients/${client.id}`)}
+              >
+                Ver
+              </button>
               <span>
                 <button
                   className="btn btn-secondary"
