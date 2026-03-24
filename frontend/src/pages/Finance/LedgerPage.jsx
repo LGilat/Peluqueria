@@ -1,15 +1,19 @@
 import { useEffect, useMemo, useState } from 'react';
 import axiosClient from '../../api/axiosClient';
 
+const PAGE_SIZE = 10;
+
 const LedgerPage = () => {
   const [ingresos, setIngresos] = useState([]);
   const [gastos, setGastos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [year, setYear] = useState(new Date().getFullYear());
+  const [pageIngresos, setPageIngresos] = useState(1);
+  const [pageGastos, setPageGastos] = useState(1);
 
   useEffect(() => {
     fetchData();
-  }, [year]);
+  }, []);
 
   const fetchData = async () => {
     try {
@@ -41,6 +45,20 @@ const LedgerPage = () => {
   const totalGastos = gastosFiltrados.reduce((sum, g) => sum + parseFloat(g.cantidad), 0);
   const balance = totalIngresos - totalGastos;
 
+  const totalPagesIngresos = Math.max(1, Math.ceil(ingresosFiltrados.length / PAGE_SIZE));
+  const totalPagesGastos = Math.max(1, Math.ceil(gastosFiltrados.length / PAGE_SIZE));
+
+  const ingresosPaginados = ingresosFiltrados.slice((pageIngresos - 1) * PAGE_SIZE, pageIngresos * PAGE_SIZE);
+  const gastosPaginados = gastosFiltrados.slice((pageGastos - 1) * PAGE_SIZE, pageGastos * PAGE_SIZE);
+
+  useEffect(() => {
+    if (pageIngresos > totalPagesIngresos) setPageIngresos(totalPagesIngresos);
+  }, [pageIngresos, totalPagesIngresos]);
+
+  useEffect(() => {
+    if (pageGastos > totalPagesGastos) setPageGastos(totalPagesGastos);
+  }, [pageGastos, totalPagesGastos]);
+
   if (loading) {
     return <div className="loading">Cargando contabilidad...</div>;
   }
@@ -53,40 +71,118 @@ const LedgerPage = () => {
           type="number"
           className="form-input"
           value={year}
-          onChange={(e) => setYear(e.target.value)}
+          onChange={(e) => {
+            setYear(e.target.value);
+            setPageIngresos(1);
+            setPageGastos(1);
+          }}
           style={{ maxWidth: '120px' }}
         />
       </div>
 
-      <div className="card">
-        <div className="item-list">
-          <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr', padding: '10px 0', borderBottom: '2px solid var(--border-color)', fontWeight: '600', color: '#7f8c8d' }}>
-            <span>Concepto</span>
-            <span>Tipo</span>
-            <span>Importe</span>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+        <div className="card">
+          <div className="card-header">
+            <strong>Ingresos</strong>
+          </div>
+          <div className="item-list">
+            <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', padding: '10px 0', borderBottom: '2px solid var(--border-color)', fontWeight: '600', color: '#7f8c8d' }}>
+              <span>Concepto</span>
+              <span>Importe</span>
+            </div>
+            {ingresosPaginados.map((i) => (
+              <div key={`ingreso-${i.id}`} className="item-row" style={{ display: 'grid', gridTemplateColumns: '2fr 1fr' }}>
+                <span>{i.tipo}</span>
+                <span>${parseFloat(i.cantidad).toFixed(2)}</span>
+              </div>
+            ))}
+            {ingresosFiltrados.length === 0 && (
+              <p style={{ padding: '20px', color: '#7f8c8d' }}>Sin ingresos.</p>
+            )}
           </div>
 
-          {ingresosFiltrados.map((i) => (
-            <div key={`ingreso-${i.id}`} className="item-row" style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr' }}>
-              <span>{i.tipo}</span>
-              <span>Ingreso</span>
-              <span>${parseFloat(i.cantidad).toFixed(2)}</span>
+          {ingresosFiltrados.length > 0 && (
+            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 0' }}>
+              <span style={{ color: '#7f8c8d' }}>
+                Página {pageIngresos} de {totalPagesIngresos}
+              </span>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <button className="btn btn-secondary" disabled={pageIngresos === 1} onClick={() => setPageIngresos(pageIngresos - 1)}>
+                  Anterior
+                </button>
+                <button className="btn btn-secondary" disabled={pageIngresos === totalPagesIngresos} onClick={() => setPageIngresos(pageIngresos + 1)}>
+                  Siguiente
+                </button>
+              </div>
             </div>
-          ))}
+          )}
 
-          {gastosFiltrados.map((g) => (
-            <div key={`gasto-${g.id}`} className="item-row" style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr' }}>
-              <span>{g.tipo}</span>
-              <span>Gasto</span>
-              <span>${parseFloat(g.cantidad).toFixed(2)}</span>
-            </div>
-          ))}
+          <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px solid var(--border-color)', paddingTop: '10px' }}>
+            <strong>Total ingresos:</strong>
+            <strong>${totalIngresos.toFixed(2)}</strong>
+          </div>
         </div>
 
-        <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '16px' }}>
-          <strong>Total ingresos: ${totalIngresos.toFixed(2)}</strong>
-          <strong>Total gastos: ${totalGastos.toFixed(2)}</strong>
-          <strong>Balance: ${balance.toFixed(2)}</strong>
+        <div className="card">
+          <div className="card-header">
+            <strong>Gastos</strong>
+          </div>
+          <div className="item-list">
+            <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', padding: '10px 0', borderBottom: '2px solid var(--border-color)', fontWeight: '600', color: '#7f8c8d' }}>
+              <span>Concepto</span>
+              <span>Importe</span>
+            </div>
+            {gastosPaginados.map((g) => (
+              <div key={`gasto-${g.id}`} className="item-row" style={{ display: 'grid', gridTemplateColumns: '2fr 1fr' }}>
+                <span>{g.tipo}</span>
+                <span>${parseFloat(g.cantidad).toFixed(2)}</span>
+              </div>
+            ))}
+            {gastosFiltrados.length === 0 && (
+              <p style={{ padding: '20px', color: '#7f8c8d' }}>Sin gastos.</p>
+            )}
+          </div>
+
+          {gastosFiltrados.length > 0 && (
+            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 0' }}>
+              <span style={{ color: '#7f8c8d' }}>
+                Página {pageGastos} de {totalPagesGastos}
+              </span>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <button className="btn btn-secondary" disabled={pageGastos === 1} onClick={() => setPageGastos(pageGastos - 1)}>
+                  Anterior
+                </button>
+                <button className="btn btn-secondary" disabled={pageGastos === totalPagesGastos} onClick={() => setPageGastos(pageGastos + 1)}>
+                  Siguiente
+                </button>
+              </div>
+            </div>
+          )}
+
+          <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px solid var(--border-color)', paddingTop: '10px' }}>
+            <strong>Total gastos:</strong>
+            <strong>${totalGastos.toFixed(2)}</strong>
+          </div>
+        </div>
+      </div>
+
+      <div className="card" style={{ marginTop: '16px' }}>
+        <div className="card-header">
+          <strong>Resumen</strong>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px' }}>
+          <div className="card" style={{ padding: '12px' }}>
+            <p style={{ color: '#7f8c8d' }}>Total ingresos</p>
+            <strong>${totalIngresos.toFixed(2)}</strong>
+          </div>
+          <div className="card" style={{ padding: '12px' }}>
+            <p style={{ color: '#7f8c8d' }}>Total gastos</p>
+            <strong>${totalGastos.toFixed(2)}</strong>
+          </div>
+          <div className="card" style={{ padding: '12px' }}>
+            <p style={{ color: '#7f8c8d' }}>Balance</p>
+            <strong>${balance.toFixed(2)}</strong>
+          </div>
         </div>
       </div>
     </div>
