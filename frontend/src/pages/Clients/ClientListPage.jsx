@@ -1,10 +1,21 @@
 import { useState, useEffect } from 'react';
 import axiosClient from '../../api/axiosClient';
+import Modal from '../../components/common/Modal';
 
 const ClientListPage = () => {
   const [clients, setClients] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [currentClient, setCurrentClient] = useState(null);
+  const [formData, setFormData] = useState({
+    nombre: '',
+    apellido: '',
+    email: '',
+    telefono: '',
+    direccion: '',
+    preferencias: ''
+  });
 
   useEffect(() => {
     fetchClients();
@@ -21,6 +32,70 @@ const ClientListPage = () => {
     }
   };
 
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleOpenModal = (client = null) => {
+    if (client) {
+      setCurrentClient(client);
+      setFormData({
+        nombre: client.nombre || '',
+        apellido: client.apellido || '',
+        email: client.email || '',
+        telefono: client.telefono || '',
+        direccion: client.direccion || '',
+        preferencias: client.preferencias || ''
+      });
+    } else {
+      setCurrentClient(null);
+      setFormData({
+        nombre: '',
+        apellido: '',
+        email: '',
+        telefono: '',
+        direccion: '',
+        preferencias: ''
+      });
+    }
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setCurrentClient(null);
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      if (currentClient) {
+        await axiosClient.put(`/cliente/${currentClient.id}/`, formData);
+      } else {
+        await axiosClient.post('/cliente/', formData);
+      }
+
+      fetchClients();
+      handleCloseModal();
+    } catch (error) {
+      console.error('Error saving client:', error);
+      alert('Error al guardar el cliente. Verifica los datos.');
+    }
+  };
+
+  const handleDelete = async (id) => {
+    if (window.confirm('¿Estás seguro de que deseas eliminar este cliente?')) {
+      try {
+        await axiosClient.delete(`/cliente/${id}/`);
+        fetchClients();
+      } catch (error) {
+        console.error('Error deleting client:', error);
+        alert('Error al eliminar el cliente.');
+      }
+    }
+  };
+
   const filteredClients = clients.filter(client =>
     client.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
     client.email.toLowerCase().includes(searchTerm.toLowerCase())
@@ -34,7 +109,9 @@ const ClientListPage = () => {
     <div className="clients-page">
       <div className="content-header">
         <h2>Clientes</h2>
-        <button className="btn btn-primary">+ Nuevo Cliente</button>
+        <button className="btn btn-primary" onClick={() => handleOpenModal()}>
+          + Nuevo Cliente
+        </button>
       </div>
 
       <div className="card">
@@ -65,8 +142,20 @@ const ClientListPage = () => {
               <span>{client.telefono}</span>
               <span>${parseFloat(client.gasto_acumulado || 0).toFixed(2)}</span>
               <span>
-                <button className="btn btn-secondary" style={{ padding: '4px 8px', fontSize: '0.8rem', marginRight: '5px' }}>Editar</button>
-                <button className="btn" style={{ padding: '4px 8px', fontSize: '0.8rem', backgroundColor: '#e74c3c', color: 'white' }}>Eliminar</button>
+                <button
+                  className="btn btn-secondary"
+                  style={{ padding: '4px 8px', fontSize: '0.8rem', marginRight: '5px' }}
+                  onClick={() => handleOpenModal(client)}
+                >
+                  Editar
+                </button>
+                <button
+                  className="btn"
+                  style={{ padding: '4px 8px', fontSize: '0.8rem', backgroundColor: '#e74c3c', color: 'white' }}
+                  onClick={() => handleDelete(client.id)}
+                >
+                  Eliminar
+                </button>
               </span>
             </div>
           ))}
@@ -78,6 +167,94 @@ const ClientListPage = () => {
           </p>
         )}
       </div>
+
+      <Modal
+        isOpen={isModalOpen}
+        onClose={handleCloseModal}
+        title={currentClient ? 'Editar Cliente' : 'Nuevo Cliente'}
+      >
+        <form onSubmit={handleSubmit} className="client-form">
+          <div className="form-row">
+            <div className="form-group">
+              <label>Nombre</label>
+              <input
+                type="text"
+                name="nombre"
+                value={formData.nombre}
+                onChange={handleInputChange}
+                required
+                className="form-input"
+              />
+            </div>
+            <div className="form-group">
+              <label>Apellido</label>
+              <input
+                type="text"
+                name="apellido"
+                value={formData.apellido}
+                onChange={handleInputChange}
+                required
+                className="form-input"
+              />
+            </div>
+          </div>
+
+          <div className="form-group">
+            <label>Email</label>
+            <input
+              type="email"
+              name="email"
+              value={formData.email}
+              onChange={handleInputChange}
+              required
+              className="form-input"
+            />
+          </div>
+
+          <div className="form-row">
+            <div className="form-group">
+              <label>Teléfono</label>
+              <input
+                type="text"
+                name="telefono"
+                value={formData.telefono}
+                onChange={handleInputChange}
+                className="form-input"
+              />
+            </div>
+            <div className="form-group">
+              <label>Dirección</label>
+              <input
+                type="text"
+                name="direccion"
+                value={formData.direccion}
+                onChange={handleInputChange}
+                className="form-input"
+              />
+            </div>
+          </div>
+
+          <div className="form-group">
+            <label>Preferencias</label>
+            <textarea
+              name="preferencias"
+              value={formData.preferencias}
+              onChange={handleInputChange}
+              rows="3"
+              className="form-input"
+            />
+          </div>
+
+          <div className="form-actions">
+            <button type="button" className="btn btn-secondary" onClick={handleCloseModal}>
+              Cancelar
+            </button>
+            <button type="submit" className="btn btn-primary">
+              {currentClient ? 'Actualizar' : 'Crear'}
+            </button>
+          </div>
+        </form>
+      </Modal>
     </div>
   );
 };
