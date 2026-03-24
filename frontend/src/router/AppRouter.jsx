@@ -9,6 +9,8 @@ import StaffListPage from '../pages/Staff/StaffListPage';
 import ServiceListPage from '../pages/Services/ServiceListPage';
 import ProductListPage from '../pages/Products/ProductListPage';
 import CalendarPage from '../pages/Calendar/CalendarPage';
+import PayrollPage from '../pages/Finance/PayrollPage';
+import NoticesPage from '../pages/Notices/NoticesPage';
 import MainLayout from '../components/Layout/MainLayout';
 
 const ProtectedRoute = ({ children }) => {
@@ -67,6 +69,8 @@ const AppRoutes = () => {
         <Route path="staff" element={<StaffListPage />} />
         <Route path="services" element={<ServiceListPage />} />
         <Route path="products" element={<ProductListPage />} />
+        <Route path="payroll" element={<PayrollPage />} />
+        <Route path="notices" element={<NoticesPage />} />
 
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>

@@ -62,6 +62,16 @@ const MainLayout = () => {
                 Atendentes
               </NavLink>
             </li>
+            <li className="nav-item">
+              <NavLink to="/payroll" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
+                Nóminas
+              </NavLink>
+            </li>
+            <li className="nav-item">
+              <NavLink to="/notices" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
+                Comunicados
+              </NavLink>
+            </li>
           </ul>
         </nav>
 

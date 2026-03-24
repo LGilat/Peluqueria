@@ -1,9 +1,10 @@
 from datetime import timedelta, time
+from decimal import Decimal
 from django.core.management.base import BaseCommand
 from django.utils import timezone
 
 from clientes.models import Cliente
-from personal.models import Atendente
+from personal.models import Atendente, NominaMensual, NominaItem, Aviso, AvisoDestinatario
 from inventario.models import Servicio, Producto, Proveedor, Stock
 from reservas.models import Reserva
 
@@ -69,7 +70,7 @@ class Command(BaseCommand):
             ("Carlos", "Díaz", "carlos@example.com", "600444445", "Peinados", "600444446"),
         ]
         atendentes = []
-        for nombre, apellido, email, telefono, especialidad, contacto in atendentes_data:
+        for idx, (nombre, apellido, email, telefono, especialidad, contacto) in enumerate(atendentes_data):
             atendente, _ = Atendente.objects.get_or_create(
                 email=email,
                 defaults={
@@ -78,9 +79,17 @@ class Command(BaseCommand):
                     "telefono": telefono,
                     "especialidad": especialidad,
                     "contacto": contacto,
+                    "hora_inicio": time(9, 0),
+                    "hora_fin": time(18, 0),
+                    "comision_porcentaje": Decimal("10.00"),
+                    "comision_fija": Decimal("2.00"),
                 },
             )
             atendentes.append(atendente)
+
+        if servicios and atendentes:
+            for idx, atendente in enumerate(atendentes):
+                atendente.servicios.set(servicios[idx % len(servicios):] or servicios)
 
         clientes_data = [
             ("Ana", "López", "ana@example.com", "600333333", "Calle 1", "Prefiere mañanas"),
@@ -132,5 +141,32 @@ class Command(BaseCommand):
                 )
                 if was_created:
                     created += 1
+
+        # Crear nominas mensuales demo
+        month = now.month
+        year = now.year
+        for atendente in atendentes:
+            nomina, _ = NominaMensual.objects.get_or_create(
+                atendente=atendente,
+                year=year,
+                month=month,
+                defaults={
+                    "salario_base": Decimal("1100.00"),
+                    "comision_fija_total": Decimal("150.00"),
+                    "comision_porcentaje_total": Decimal("220.00"),
+                    "otros": Decimal("50.00"),
+                },
+            )
+            if not nomina.items.exists():
+                NominaItem.objects.create(nomina=nomina, concepto="Comision corte", importe=Decimal("60.00"))
+                NominaItem.objects.create(nomina=nomina, concepto="Comision color", importe=Decimal("90.00"))
+
+        # Avisos demo
+        aviso, _ = Aviso.objects.get_or_create(
+            titulo="Aviso de cierre",
+            defaults={"mensaje": "Cierre por mantenimiento el viernes a las 18:00."},
+        )
+        for atendente in atendentes:
+            AvisoDestinatario.objects.get_or_create(aviso=aviso, atendente=atendente)
 
         self.stdout.write(self.style.SUCCESS(f"Datos de ejemplo creados/actualizados. Reservas nuevas: {created}"))
