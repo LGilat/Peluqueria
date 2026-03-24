@@ -20,6 +20,7 @@ class ApiInfoView(APIView):
                 },
                 "resources": {
                     "cliente": "/api/cliente/",
+                    "cliente-servicio": "/api/cliente-servicio/",
                     "proveedor": "/api/proveedor/",
                     "producto": "/api/producto/",
                     "servicio": "/api/servicio/",

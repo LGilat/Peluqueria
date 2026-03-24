@@ -1,3 +1,4 @@
+from datetime import datetime, timedelta
 from rest_framework import serializers
 from .models import Reserva, HistorialReserva
 
@@ -18,22 +19,28 @@ class ReservaSerializer(serializers.ModelSerializer):
         fecha = data['fecha']
         hora = data['hora']
         atendente = data.get('atendente')
+        servicio = data.get('servicio')
 
-        if atendente:
+        if atendente and servicio:
             reservas_existentes = Reserva.objects.filter(
                 fecha=fecha,
-                hora=hora,
                 atendente=atendente,
-                estado__in=['pendiente', 'realizada']
-            )
+                estado__in=['pendiente', 'realizada', 'finalizada']
+            ).select_related('servicio')
 
             if self.instance:
                 reservas_existentes = reservas_existentes.exclude(id=self.instance.id)
 
-            if reservas_existentes.exists():
-                raise serializers.ValidationError(
-                    f"El atendente {atendente.nombre} ya tiene una reserva en ese horario."
-                )
+            start = datetime.combine(fecha, hora)
+            end = start + timedelta(minutes=servicio.duracion_minutos)
+
+            for reserva in reservas_existentes:
+                existing_start = datetime.combine(reserva.fecha, reserva.hora)
+                existing_end = existing_start + timedelta(minutes=reserva.servicio.duracion_minutos)
+                if existing_start < end and start < existing_end:
+                    raise serializers.ValidationError(
+                        f"El atendente {atendente.nombre} ya tiene una reserva en ese horario."
+                    )
 
         return data
 
