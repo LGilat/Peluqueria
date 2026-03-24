@@ -58,6 +58,11 @@ const MainLayout = () => {
               </NavLink>
             </li>
             <li className="nav-item">
+              <NavLink to="/stock" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
+                Stock
+              </NavLink>
+            </li>
+            <li className="nav-item">
               <NavLink to="/staff" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
                 Atendentes
               </NavLink>
@@ -70,6 +75,11 @@ const MainLayout = () => {
             <li className="nav-item">
               <NavLink to="/reports" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
                 Finanzas
+              </NavLink>
+            </li>
+            <li className="nav-item">
+              <NavLink to="/ledger" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
+                Contabilidad
               </NavLink>
             </li>
             <li className="nav-item">

@@ -8,9 +8,11 @@ import ReservationListPage from '../pages/Reservations/ReservationListPage';
 import StaffListPage from '../pages/Staff/StaffListPage';
 import ServiceListPage from '../pages/Services/ServiceListPage';
 import ProductListPage from '../pages/Products/ProductListPage';
+import StockPage from '../pages/Products/StockPage';
 import CalendarPage from '../pages/Calendar/CalendarPage';
 import PayrollPage from '../pages/Finance/PayrollPage';
 import ReportsPage from '../pages/Finance/ReportsPage';
+import LedgerPage from '../pages/Finance/LedgerPage';
 import NoticesPage from '../pages/Notices/NoticesPage';
 import MainLayout from '../components/Layout/MainLayout';
 
@@ -70,8 +72,10 @@ const AppRoutes = () => {
         <Route path="staff" element={<StaffListPage />} />
         <Route path="services" element={<ServiceListPage />} />
         <Route path="products" element={<ProductListPage />} />
+        <Route path="stock" element={<StockPage />} />
         <Route path="payroll" element={<PayrollPage />} />
         <Route path="reports" element={<ReportsPage />} />
+        <Route path="ledger" element={<LedgerPage />} />
         <Route path="notices" element={<NoticesPage />} />
 
         <Route path="*" element={<Navigate to="/" replace />} />
