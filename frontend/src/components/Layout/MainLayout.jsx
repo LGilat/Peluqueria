@@ -68,6 +68,11 @@ const MainLayout = () => {
               </NavLink>
             </li>
             <li className="nav-item">
+              <NavLink to="/reports" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
+                Finanzas
+              </NavLink>
+            </li>
+            <li className="nav-item">
               <NavLink to="/notices" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
                 Comunicados
               </NavLink>

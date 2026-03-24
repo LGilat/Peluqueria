@@ -7,6 +7,7 @@ const NoticesPage = () => {
   const [staff, setStaff] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [sending, setSending] = useState(false);
   const [formData, setFormData] = useState({
     titulo: '',
     mensaje: '',
@@ -57,6 +58,7 @@ const NoticesPage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+      setSending(true);
       const aviso = await axiosClient.post('/aviso/', {
         titulo: formData.titulo,
         mensaje: formData.mensaje
@@ -71,11 +73,15 @@ const NoticesPage = () => {
         )
       );
 
+      await axiosClient.post('/aviso/enviar-email/', { aviso: aviso.data.id });
+
       fetchData();
       handleCloseModal();
     } catch (error) {
       console.error('Error saving notice:', error);
       alert('Error al enviar el aviso.');
+    } finally {
+      setSending(false);
     }
   };
 
@@ -150,8 +156,8 @@ const NoticesPage = () => {
             <button type="button" className="btn btn-secondary" onClick={handleCloseModal}>
               Cancelar
             </button>
-            <button type="submit" className="btn btn-primary">
-              Enviar
+            <button type="submit" className="btn btn-primary" disabled={sending}>
+              {sending ? 'Enviando...' : 'Enviar'}
             </button>
           </div>
         </form>

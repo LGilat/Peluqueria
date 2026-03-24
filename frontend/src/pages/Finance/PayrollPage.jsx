@@ -118,6 +118,19 @@ const PayrollPage = () => {
     }
   };
 
+  const handleRecalculate = async () => {
+    try {
+      await axiosClient.post('/nomina/recalcular/', {
+        year: filters.year || new Date().getFullYear(),
+        month: filters.month || new Date().getMonth() + 1,
+      });
+      fetchData();
+    } catch (error) {
+      console.error('Error recalculating payroll:', error);
+      alert('Error al recalcular nóminas.');
+    }
+  };
+
   const staffById = new Map(staff.map((s) => [s.id, s]));
 
   const filteredPayrolls = payrolls.filter((p) => {
@@ -151,9 +164,14 @@ const PayrollPage = () => {
     <div className="payroll-page">
       <div className="content-header">
         <h2>Nóminas</h2>
-        <button className="btn btn-primary" onClick={() => handleOpenModal()}>
-          + Nueva Nómina
-        </button>
+        <div style={{ display: 'flex', gap: '8px' }}>
+          <button className="btn btn-secondary" onClick={handleRecalculate}>
+            Recalcular
+          </button>
+          <button className="btn btn-primary" onClick={() => handleOpenModal()}>
+            + Nueva Nómina
+          </button>
+        </div>
       </div>
 
       <div className="card">
