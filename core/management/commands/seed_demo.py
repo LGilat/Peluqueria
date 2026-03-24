@@ -7,6 +7,7 @@ from clientes.models import Cliente
 from personal.models import Atendente, NominaMensual, NominaItem, Aviso, AvisoDestinatario
 from inventario.models import Servicio, Producto, Proveedor, Stock
 from reservas.models import Reserva
+from facturacion.models import Ingreso, Gasto
 
 
 class Command(BaseCommand):
@@ -25,17 +26,17 @@ class Command(BaseCommand):
         )
 
         productos = [
-            ("Champú Profesional", "Champú nutritivo", "12.50"),
-            ("Mascarilla Reparadora", "Mascarilla intensa", "18.00"),
-            ("Aceite Capilar", "Brillo y suavidad", "9.90"),
-            ("Laca Fijación", "Fijación extra", "7.50"),
-            ("Tinte 6.0", "Castaño oscuro", "14.00"),
-            ("Cera Modeladora", "Acabado mate", "8.20"),
+            ("Champú Profesional", "Champú nutritivo", "12.50", "6.20"),
+            ("Mascarilla Reparadora", "Mascarilla intensa", "18.00", "9.50"),
+            ("Aceite Capilar", "Brillo y suavidad", "9.90", "4.80"),
+            ("Laca Fijación", "Fijación extra", "7.50", "3.20"),
+            ("Tinte 6.0", "Castaño oscuro", "14.00", "7.10"),
+            ("Cera Modeladora", "Acabado mate", "8.20", "3.60"),
         ]
-        for nombre, descripcion, precio in productos:
+        for nombre, descripcion, precio, costo in productos:
             producto, _ = Producto.objects.get_or_create(
                 nombre=nombre,
-                defaults={"descripcion": descripcion, "precio": precio},
+                defaults={"descripcion": descripcion, "precio": precio, "costo": costo},
             )
             Stock.objects.get_or_create(
                 producto=producto,
@@ -168,5 +169,27 @@ class Command(BaseCommand):
         )
         for atendente in atendentes:
             AvisoDestinatario.objects.get_or_create(aviso=aviso, atendente=atendente)
+
+        # Datos financieros 2025
+        for month_2025 in range(1, 13):
+            Ingreso.objects.get_or_create(
+                tipo="Servicios",
+                cantidad=Decimal("4500.00") + Decimal(month_2025 * 50),
+                fecha=timezone.datetime(2025, month_2025, 5, tzinfo=timezone.get_current_timezone()),
+            )
+            Ingreso.objects.get_or_create(
+                tipo="Productos",
+                cantidad=Decimal("1200.00") + Decimal(month_2025 * 30),
+                fecha=timezone.datetime(2025, month_2025, 15, tzinfo=timezone.get_current_timezone()),
+            )
+
+            # Gastos basados en stock
+            for stock in Stock.objects.select_related('producto'):
+                Gasto.objects.get_or_create(
+                    tipo=f"Compra {stock.producto.nombre}",
+                    cantidad=(stock.cantidad * stock.producto.costo),
+                    fecha=timezone.datetime(2025, month_2025, 2, tzinfo=timezone.get_current_timezone()),
+                    proveedor=proveedor,
+                )
 
         self.stdout.write(self.style.SUCCESS(f"Datos de ejemplo creados/actualizados. Reservas nuevas: {created}"))

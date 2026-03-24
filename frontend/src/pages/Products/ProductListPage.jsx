@@ -17,6 +17,7 @@ const ProductListPage = () => {
     nombre: '',
     descripcion: '',
     precio: '',
+    costo: '',
     imagen: null
   });
 
@@ -51,6 +52,7 @@ const ProductListPage = () => {
         nombre: product.nombre || '',
         descripcion: product.descripcion || '',
         precio: product.precio || '',
+        costo: product.costo || '',
         imagen: null
       });
     } else {
@@ -59,6 +61,7 @@ const ProductListPage = () => {
         nombre: '',
         descripcion: '',
         precio: '',
+        costo: '',
         imagen: null
       });
     }
@@ -77,6 +80,7 @@ const ProductListPage = () => {
       payload.append('nombre', formData.nombre);
       payload.append('descripcion', formData.descripcion);
       payload.append('precio', formData.precio);
+      payload.append('costo', formData.costo);
       if (formData.imagen) {
         payload.append('imagen', formData.imagen);
       }
@@ -165,6 +169,11 @@ const ProductListPage = () => {
       key: 'precio',
       header: 'Precio',
       render: (value) => `$${parseFloat(value).toFixed(2)}`
+    },
+    {
+      key: 'costo',
+      header: 'Costo',
+      render: (value) => `$${parseFloat(value).toFixed(2)}`
     }
   ];
 
@@ -249,18 +258,33 @@ const ProductListPage = () => {
             />
           </div>
 
-          <div className="form-group">
-            <label>Precio</label>
-            <input
-              type="number"
-              name="precio"
-              value={formData.precio}
-              onChange={handleInputChange}
-              required
-              min="0"
-              step="0.01"
-              className="form-input"
-            />
+          <div className="form-row">
+            <div className="form-group">
+              <label>Precio</label>
+              <input
+                type="number"
+                name="precio"
+                value={formData.precio}
+                onChange={handleInputChange}
+                required
+                min="0"
+                step="0.01"
+                className="form-input"
+              />
+            </div>
+            <div className="form-group">
+              <label>Costo</label>
+              <input
+                type="number"
+                name="costo"
+                value={formData.costo}
+                onChange={handleInputChange}
+                required
+                min="0"
+                step="0.01"
+                className="form-input"
+              />
+            </div>
           </div>
 
           <div className="form-group">
