@@ -170,27 +170,28 @@ class Command(BaseCommand):
         for atendente in atendentes:
             AvisoDestinatario.objects.get_or_create(aviso=aviso, atendente=atendente)
 
-        # Datos financieros 2025
-        for month_2025 in range(1, 13):
-            Ingreso.objects.get_or_create(
-                tipo="Servicios",
-                cantidad=Decimal("4500.00") + Decimal(month_2025 * 50),
-                fecha=timezone.datetime(2025, month_2025, 5, tzinfo=timezone.get_current_timezone()),
-            )
-            Ingreso.objects.get_or_create(
-                tipo="Productos",
-                cantidad=Decimal("1200.00") + Decimal(month_2025 * 30),
-                fecha=timezone.datetime(2025, month_2025, 15, tzinfo=timezone.get_current_timezone()),
-            )
-
-            # Gastos basados en compras (simulacion)
-            for idx, stock in enumerate(Stock.objects.select_related('producto')):
-                compra_cantidad = 10 + (month_2025 % 3) * 5
-                Gasto.objects.get_or_create(
-                    tipo=f"Compra {stock.producto.nombre}",
-                    cantidad=(compra_cantidad * stock.producto.costo),
-                    fecha=timezone.datetime(2025, month_2025, 2, tzinfo=timezone.get_current_timezone()),
-                    proveedor=proveedor,
+        # Datos financieros 2025-2026
+        for year_ in [2025, 2026]:
+            for month_ in range(1, 13):
+                Ingreso.objects.get_or_create(
+                    tipo="Servicios",
+                    cantidad=Decimal("4500.00") + Decimal(month_ * 50),
+                    fecha=timezone.datetime(year_, month_, 5, tzinfo=timezone.get_current_timezone()),
                 )
+                Ingreso.objects.get_or_create(
+                    tipo="Productos",
+                    cantidad=Decimal("1200.00") + Decimal(month_ * 30),
+                    fecha=timezone.datetime(year_, month_, 15, tzinfo=timezone.get_current_timezone()),
+                )
+
+                # Gastos basados en compras (simulacion)
+                for stock in Stock.objects.select_related('producto'):
+                    compra_cantidad = 10 + (month_ % 3) * 5
+                    Gasto.objects.get_or_create(
+                        tipo=f"Compra {stock.producto.nombre}",
+                        cantidad=(compra_cantidad * stock.producto.costo),
+                        fecha=timezone.datetime(year_, month_, 2, tzinfo=timezone.get_current_timezone()),
+                        proveedor=proveedor,
+                    )
 
         self.stdout.write(self.style.SUCCESS(f"Datos de ejemplo creados/actualizados. Reservas nuevas: {created}"))
