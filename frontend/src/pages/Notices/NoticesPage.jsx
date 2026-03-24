@@ -8,6 +8,7 @@ const NoticesPage = () => {
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [sending, setSending] = useState(false);
+  const [lastSendResult, setLastSendResult] = useState(null);
   const [formData, setFormData] = useState({
     titulo: '',
     mensaje: '',
@@ -59,6 +60,7 @@ const NoticesPage = () => {
     e.preventDefault();
     try {
       setSending(true);
+      setLastSendResult(null);
       const aviso = await axiosClient.post('/aviso/', {
         titulo: formData.titulo,
         mensaje: formData.mensaje
@@ -73,7 +75,8 @@ const NoticesPage = () => {
         )
       );
 
-      await axiosClient.post('/aviso/enviar-email/', { aviso: aviso.data.id });
+      const result = await axiosClient.post('/aviso/enviar-email/', { aviso: aviso.data.id });
+      setLastSendResult(result.data);
 
       fetchData();
       handleCloseModal();
@@ -97,6 +100,23 @@ const NoticesPage = () => {
           + Nuevo Comunicado
         </button>
       </div>
+
+      {lastSendResult && (
+        <div className="card" style={{ marginBottom: '16px' }}>
+          <strong>Resultado envío</strong>
+          <p>Enviados: {lastSendResult.enviados}</p>
+          {lastSendResult.errores && lastSendResult.errores.length > 0 && (
+            <div>
+              <strong>Errores:</strong>
+              {lastSendResult.errores.map((e, idx) => (
+                <div key={`${e.atendente}-${idx}`} style={{ color: '#e74c3c' }}>
+                  Atendente {e.atendente}: {e.error}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       <div className="card">
         <div className="item-list">

@@ -3,7 +3,6 @@ from decimal import Decimal
 
 from django.conf import settings
 from django.core.mail import send_mail
-from django.db.models import Sum
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
@@ -51,7 +50,8 @@ class NominaMensualViewSet(ModelViewSet):
             atendente_reservas = reservas.filter(atendente_id=atendente.id)
             total_servicios = atendente_reservas.count()
             base = Decimal('0.00')
-            comision_fija = (atendente.comision_fija or Decimal('0.00')) * total_servicios
+            comision_fija_unit = atendente.comision_fija or Decimal('0.00')
+            comision_fija = comision_fija_unit * total_servicios
             porcentaje = atendente.comision_porcentaje or Decimal('0.00')
 
             total_servicios_importe = Decimal('0.00')
@@ -75,6 +75,29 @@ class NominaMensualViewSet(ModelViewSet):
             nomina.comision_fija_total = comision_fija
             nomina.comision_porcentaje_total = comision_porcentaje
             nomina.save()
+
+            # Regenerar items
+            nomina.items.all().delete()
+            if comision_fija > 0:
+                NominaItem.objects.create(
+                    nomina=nomina,
+                    concepto='Comision fija por servicios',
+                    importe=comision_fija,
+                )
+            if comision_porcentaje > 0:
+                NominaItem.objects.create(
+                    nomina=nomina,
+                    concepto='Comision porcentual sobre servicios',
+                    importe=comision_porcentaje,
+                )
+
+            for r in atendente_reservas:
+                NominaItem.objects.create(
+                    nomina=nomina,
+                    reserva=r,
+                    concepto=f"Servicio {r.servicio.nombre}",
+                    importe=r.servicio.precio,
+                )
 
             resultado.append({
                 'atendente': atendente.id,
@@ -103,21 +126,26 @@ class AvisoViewSet(ModelViewSet):
 
         destinatarios = AvisoDestinatario.objects.filter(aviso_id=aviso_id).select_related('aviso', 'atendente')
         enviados = 0
+        errores = []
         for item in destinatarios:
             if not item.atendente.email:
+                errores.append({'atendente': item.atendente.id, 'error': 'sin email'})
                 continue
-            send_mail(
-                item.aviso.titulo,
-                item.aviso.mensaje,
-                settings.DEFAULT_FROM_EMAIL,
-                [item.atendente.email],
-                fail_silently=True,
-            )
-            item.leido = True
-            item.save(update_fields=['leido'])
-            enviados += 1
+            try:
+                send_mail(
+                    item.aviso.titulo,
+                    item.aviso.mensaje,
+                    settings.DEFAULT_FROM_EMAIL,
+                    [item.atendente.email],
+                    fail_silently=False,
+                )
+                item.leido = True
+                item.save(update_fields=['leido'])
+                enviados += 1
+            except Exception as exc:
+                errores.append({'atendente': item.atendente.id, 'error': str(exc)})
 
-        return Response({'enviados': enviados})
+        return Response({'enviados': enviados, 'errores': errores})
 
 
 class AvisoDestinatarioViewSet(ModelViewSet):

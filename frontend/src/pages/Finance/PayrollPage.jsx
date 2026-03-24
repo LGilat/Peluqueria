@@ -19,6 +19,7 @@ const PayrollPage = () => {
     comision_porcentaje_total: '',
     otros: ''
   });
+  const [detailItems, setDetailItems] = useState([]);
 
   useEffect(() => {
     fetchData();
@@ -37,6 +38,15 @@ const PayrollPage = () => {
       console.error('Error fetching payrolls:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchItems = async (nominaId) => {
+    try {
+      const res = await axiosClient.get('/nomina-item/');
+      setDetailItems(res.data.filter((i) => i.nomina === nominaId));
+    } catch (error) {
+      console.error('Error fetching items:', error);
     }
   };
 
@@ -62,8 +72,10 @@ const PayrollPage = () => {
         comision_porcentaje_total: payroll.comision_porcentaje_total,
         otros: payroll.otros
       });
+      fetchItems(payroll.id);
     } else {
       setCurrentPayroll(null);
+      setDetailItems([]);
       setFormData({
         atendente: '',
         year: new Date().getFullYear(),
@@ -80,6 +92,7 @@ const PayrollPage = () => {
   const handleCloseModal = () => {
     setIsModalOpen(false);
     setCurrentPayroll(null);
+    setDetailItems([]);
   };
 
   const handleSubmit = async (e) => {
@@ -301,6 +314,20 @@ const PayrollPage = () => {
               />
             </div>
           </div>
+
+          {currentPayroll && detailItems.length > 0 && (
+            <div className="card" style={{ marginTop: '12px' }}>
+              <strong>Detalle</strong>
+              <div className="item-list">
+                {detailItems.map((item) => (
+                  <div key={item.id} className="item-row" style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <span>{item.concepto}</span>
+                    <span>${parseFloat(item.importe).toFixed(2)}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           <div className="form-actions">
             <button type="button" className="btn btn-secondary" onClick={handleCloseModal}>
