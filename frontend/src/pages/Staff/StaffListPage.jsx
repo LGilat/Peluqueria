@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import axiosClient from '../../api/axiosClient';
 import Table from '../../components/common/Table';
 import Modal from '../../components/common/Modal';
@@ -18,6 +19,8 @@ const StaffListPage = () => {
     especialidad: '',
     contacto: ''
   });
+
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchStaff();
@@ -113,7 +116,19 @@ const StaffListPage = () => {
     },
     { key: 'email', header: 'Email' },
     { key: 'telefono', header: 'Teléfono' },
-    { key: 'especialidad', header: 'Especialidad' }
+    { key: 'especialidad', header: 'Especialidad' },
+    {
+      key: 'calendar',
+      header: 'Calendario',
+      render: (_value, row) => (
+        <button
+          className="btn btn-secondary btn-sm"
+          onClick={() => navigate(`/calendar?staff=${row.id}`)}
+        >
+          Ver
+        </button>
+      )
+    }
   ];
 
   if (loading) {

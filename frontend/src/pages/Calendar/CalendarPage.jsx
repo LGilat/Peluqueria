@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import axiosClient from '../../api/axiosClient';
 import './CalendarPage.css';
 
@@ -32,6 +33,9 @@ const CalendarPage = () => {
   const [staff, setStaff] = useState([]);
   const [loading, setLoading] = useState(true);
   const [weekStart, setWeekStart] = useState(startOfWeek(new Date()));
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  const staffFilter = searchParams.get('staff') || '';
 
   useEffect(() => {
     fetchData();
@@ -68,6 +72,7 @@ const CalendarPage = () => {
 
     reservations.forEach((res) => {
       if (!map.has(res.fecha)) return;
+      if (staffFilter && String(res.atendente) !== String(staffFilter)) return;
       map.get(res.fecha).push(res);
     });
 
@@ -76,10 +81,19 @@ const CalendarPage = () => {
     }
 
     return map;
-  }, [reservations, days]);
+  }, [reservations, days, staffFilter]);
 
   const handlePrevWeek = () => setWeekStart(addDays(weekStart, -7));
   const handleNextWeek = () => setWeekStart(addDays(weekStart, 7));
+
+  const handleStaffFilter = (value) => {
+    if (!value) {
+      searchParams.delete('staff');
+      setSearchParams(searchParams);
+      return;
+    }
+    setSearchParams({ staff: value });
+  };
 
   if (loading) {
     return <div className="loading">Cargando calendario...</div>;
@@ -92,6 +106,30 @@ const CalendarPage = () => {
         <div style={{ display: 'flex', gap: '8px' }}>
           <button className="btn btn-secondary" onClick={handlePrevWeek}>Semana anterior</button>
           <button className="btn btn-secondary" onClick={handleNextWeek}>Semana siguiente</button>
+        </div>
+      </div>
+
+      <div className="card" style={{ marginBottom: '16px' }}>
+        <div className="card-header" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <label style={{ fontWeight: 600 }}>Filtrar por atendente:</label>
+          <select
+            className="form-input"
+            value={staffFilter}
+            onChange={(e) => handleStaffFilter(e.target.value)}
+            style={{ maxWidth: '260px' }}
+          >
+            <option value="">Todos</option>
+            {staff.map((member) => (
+              <option key={member.id} value={member.id}>
+                {member.nombre} {member.apellido}
+              </option>
+            ))}
+          </select>
+          {staffFilter && (
+            <button className="btn btn-secondary" onClick={() => handleStaffFilter('')}>
+              Limpiar filtro
+            </button>
+          )}
         </div>
       </div>
 
@@ -113,16 +151,20 @@ const CalendarPage = () => {
                   const atendente = staffById.get(res.atendente);
                   return (
                     <div key={res.id} className={`calendar-item status-${res.estado}`}>
-                      <div className="calendar-time">{res.hora.slice(0, 5)}</div>
+                      <div className="calendar-time">Hora: {res.hora.slice(0, 5)}</div>
                       <div className="calendar-title">
-                        {servicio ? servicio.nombre : 'Servicio'}
+                        Servicio: {servicio ? servicio.nombre : 'Servicio'}
                       </div>
                       <div className="calendar-meta">
-                        {cliente ? `${cliente.nombre} ${cliente.apellido}` : `Cliente ${res.cliente}`}
+                        Cliente: {cliente ? `${cliente.nombre} ${cliente.apellido}` : `Cliente ${res.cliente}`}
                       </div>
-                      <div className="calendar-meta">
-                        {atendente ? `${atendente.nombre} ${atendente.apellido}` : 'Sin atendente'}
-                      </div>
+                      <button
+                        type="button"
+                        className="calendar-link"
+                        onClick={() => handleStaffFilter(res.atendente)}
+                      >
+                        Atendente: {atendente ? `${atendente.nombre} ${atendente.apellido}` : 'Sin atendente'}
+                      </button>
                     </div>
                   );
                 })
