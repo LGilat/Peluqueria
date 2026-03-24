@@ -1,3 +1,21 @@
 from django.contrib import admin
+from .models import Producto, Proveedor, Stock
 
-# Register your models here.
+
+@admin.register(Producto)
+class ProductoAdmin(admin.ModelAdmin):
+    list_display = ('id', 'nombre', 'precio')
+    search_fields = ('nombre',)
+
+
+@admin.register(Proveedor)
+class ProveedorAdmin(admin.ModelAdmin):
+    list_display = ('id', 'nombre', 'email', 'telefono')
+    search_fields = ('nombre', 'email')
+
+
+@admin.register(Stock)
+class StockAdmin(admin.ModelAdmin):
+    list_display = ('id', 'producto', 'proveedor', 'cantidad')
+    search_fields = ('producto__nombre', 'proveedor__nombre')
+    list_filter = ('proveedor',)
