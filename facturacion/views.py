@@ -53,17 +53,31 @@ class FinancialReportView(APIView):
         ingresos_map = {(i['year'], i['month']): i['total'] for i in ingresos}
         gastos_map = {(g['year'], g['month']): g['total'] for g in gastos}
 
+        # desglose por tipo
+        ingresos_tipo = (
+            ingresos_qs.annotate(year=ExtractYear('fecha'), month=ExtractMonth('fecha'))
+            .values('year', 'month', 'tipo')
+            .annotate(total=Sum('cantidad'))
+        )
+        ingresos_tipo_map = {}
+        for row in ingresos_tipo:
+            key = (row['year'], row['month'])
+            ingresos_tipo_map.setdefault(key, {})[row['tipo']] = row['total']
+
         months = sorted(set(ingresos_map.keys()) | set(gastos_map.keys()))
         data = []
         for y, m in months:
             inc = ingresos_map.get((y, m), 0) or 0
             exp = gastos_map.get((y, m), 0) or 0
+            tipo = ingresos_tipo_map.get((y, m), {})
             data.append({
                 'year': y,
                 'month': m,
                 'ingresos': inc,
                 'gastos': exp,
                 'margen': inc - exp,
+                'ingresos_servicios': tipo.get('Servicios', 0) or 0,
+                'ingresos_productos': tipo.get('Productos', 0) or 0,
             })
 
         return Response({

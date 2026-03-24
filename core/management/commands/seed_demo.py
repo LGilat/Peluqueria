@@ -183,11 +183,12 @@ class Command(BaseCommand):
                 fecha=timezone.datetime(2025, month_2025, 15, tzinfo=timezone.get_current_timezone()),
             )
 
-            # Gastos basados en stock
-            for stock in Stock.objects.select_related('producto'):
+            # Gastos basados en compras (simulacion)
+            for idx, stock in enumerate(Stock.objects.select_related('producto')):
+                compra_cantidad = 10 + (month_2025 % 3) * 5
                 Gasto.objects.get_or_create(
                     tipo=f"Compra {stock.producto.nombre}",
-                    cantidad=(stock.cantidad * stock.producto.costo),
+                    cantidad=(compra_cantidad * stock.producto.costo),
                     fecha=timezone.datetime(2025, month_2025, 2, tzinfo=timezone.get_current_timezone()),
                     proveedor=proveedor,
                 )
