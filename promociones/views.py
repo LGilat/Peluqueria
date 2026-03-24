@@ -1,13 +1,8 @@
-from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIView
+from rest_framework.viewsets import ModelViewSet
 from .models import Promocion
 from .serializers import PromocionSerializer
 
 
-class PromocionList(ListCreateAPIView):
-    queryset = Promocion.objects.all()
-    serializer_class = PromocionSerializer
-
-
-class PromocionDetail(RetrieveUpdateDestroyAPIView):
+class PromocionViewSet(ModelViewSet):
     queryset = Promocion.objects.all()
     serializer_class = PromocionSerializer

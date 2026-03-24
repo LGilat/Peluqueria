@@ -7,6 +7,8 @@ class Cliente(models.Model):
     email = models.EmailField(unique=True)
     telefono = models.CharField(max_length=15)
     direccion = models.TextField()
+    preferencias = models.TextField(blank=True)
+    gasto_acumulado = models.DecimalField(max_digits=12, decimal_places=2, default=0)
 
     def __str__(self):
         return self.nombre

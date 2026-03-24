@@ -1,43 +1,23 @@
-from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIView
+from rest_framework.viewsets import ModelViewSet
 from .models import Factura, LineaFactura, Ingreso, Gasto
 from .serializers import FacturaSerializer, LineaFacturaSerializer, IngresoSerializer, GastoSerializer
 
 
-class FacturaList(ListCreateAPIView):
+class FacturaViewSet(ModelViewSet):
     queryset = Factura.objects.all()
     serializer_class = FacturaSerializer
 
 
-class FacturaDetail(RetrieveUpdateDestroyAPIView):
-    queryset = Factura.objects.all()
-    serializer_class = FacturaSerializer
-
-
-class LineaFacturaList(ListCreateAPIView):
+class LineaFacturaViewSet(ModelViewSet):
     queryset = LineaFactura.objects.all()
     serializer_class = LineaFacturaSerializer
 
 
-class LineaFacturaDetail(RetrieveUpdateDestroyAPIView):
-    queryset = LineaFactura.objects.all()
-    serializer_class = LineaFacturaSerializer
-
-
-class IngresoList(ListCreateAPIView):
+class IngresoViewSet(ModelViewSet):
     queryset = Ingreso.objects.all()
     serializer_class = IngresoSerializer
 
 
-class IngresoDetail(RetrieveUpdateDestroyAPIView):
-    queryset = Ingreso.objects.all()
-    serializer_class = IngresoSerializer
-
-
-class GastoList(ListCreateAPIView):
-    queryset = Gasto.objects.all()
-    serializer_class = GastoSerializer
-
-
-class GastoDetail(RetrieveUpdateDestroyAPIView):
+class GastoViewSet(ModelViewSet):
     queryset = Gasto.objects.all()
     serializer_class = GastoSerializer

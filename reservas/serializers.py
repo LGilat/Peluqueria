@@ -3,6 +3,8 @@ from .models import Reserva, HistorialReserva
 
 
 class ReservaSerializer(serializers.ModelSerializer):
+    servicio_detalle = serializers.StringRelatedField(source='servicio', read_only=True)
+
     class Meta:
         model = Reserva
         fields = '__all__'

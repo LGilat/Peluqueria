@@ -1,33 +1,23 @@
-from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIView
-from .models import Producto, Stock, Proveedor
-from .serializers import ProductoSerializer, StockSerializer, ProveedorSerializer
+from rest_framework.viewsets import ModelViewSet
+from .models import Producto, Stock, Proveedor, Servicio
+from .serializers import ProductoSerializer, StockSerializer, ProveedorSerializer, ServicioSerializer
 
 
-class ProductoList(ListCreateAPIView):
+class ProductoViewSet(ModelViewSet):
     queryset = Producto.objects.all()
     serializer_class = ProductoSerializer
 
 
-class ProductoDetail(RetrieveUpdateDestroyAPIView):
-    queryset = Producto.objects.all()
-    serializer_class = ProductoSerializer
-
-
-class StockList(ListCreateAPIView):
+class StockViewSet(ModelViewSet):
     queryset = Stock.objects.all()
     serializer_class = StockSerializer
 
 
-class StockDetail(RetrieveUpdateDestroyAPIView):
-    queryset = Stock.objects.all()
-    serializer_class = StockSerializer
-
-
-class ProveedorList(ListCreateAPIView):
+class ProveedorViewSet(ModelViewSet):
     queryset = Proveedor.objects.all()
     serializer_class = ProveedorSerializer
 
 
-class ProveedorDetail(RetrieveUpdateDestroyAPIView):
-    queryset = Proveedor.objects.all()
-    serializer_class = ProveedorSerializer
+class ServicioViewSet(ModelViewSet):
+    queryset = Servicio.objects.all()
+    serializer_class = ServicioSerializer

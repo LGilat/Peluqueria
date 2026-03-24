@@ -1,4 +1,5 @@
 from django.db import models
+from django.utils import timezone
 
 
 ESTADOS_RESERVA = [
@@ -11,11 +12,16 @@ ESTADOS_RESERVA = [
 
 class Reserva(models.Model):
     cliente = models.ForeignKey('clientes.Cliente', on_delete=models.CASCADE)
-    servicio = models.CharField(max_length=100)
+    servicio = models.ForeignKey('inventario.Servicio', on_delete=models.PROTECT)
     fecha = models.DateField()
     hora = models.TimeField()
     estado = models.CharField(max_length=50, choices=ESTADOS_RESERVA)
     observaciones = models.TextField(blank=True)
+    cancelado_en = models.DateTimeField(blank=True, null=True)
+    motivo_cancelacion = models.TextField(blank=True)
+    recordatorio_enviado = models.BooleanField(default=False)
+    creado_en = models.DateTimeField(default=timezone.now, editable=False)
+    actualizado_en = models.DateTimeField(auto_now=True)
     atendente = models.ForeignKey(
         'personal.Atendente',
         related_name='reservas',

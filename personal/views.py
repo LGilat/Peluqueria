@@ -1,13 +1,8 @@
-from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIView
+from rest_framework.viewsets import ModelViewSet
 from .models import Atendente
 from .serializers import AtendenteSerializer
 
 
-class AtendenteList(ListCreateAPIView):
-    queryset = Atendente.objects.all()
-    serializer_class = AtendenteSerializer
-
-
-class AtendenteDetail(RetrieveUpdateDestroyAPIView):
+class AtendenteViewSet(ModelViewSet):
     queryset = Atendente.objects.all()
     serializer_class = AtendenteSerializer

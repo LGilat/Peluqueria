@@ -1,15 +1,10 @@
-from django.urls import path
-from .views import (
-    ProductoList, ProductoDetail,
-    StockList, StockDetail,
-    ProveedorList, ProveedorDetail
-)
+from rest_framework.routers import DefaultRouter
+from .views import ProductoViewSet, StockViewSet, ProveedorViewSet, ServicioViewSet
 
-urlpatterns = [
-    path('producto/', ProductoList.as_view(), name='producto-list'),
-    path('producto/<int:pk>/', ProductoDetail.as_view(), name='producto-detail'),
-    path('stock/', StockList.as_view(), name='stock-list'),
-    path('stock/<int:pk>/', StockDetail.as_view(), name='stock-detail'),
-    path('proveedor/', ProveedorList.as_view(), name='proveedor-list'),
-    path('proveedor/<int:pk>/', ProveedorDetail.as_view(), name='proveedor-detail'),
-]
+router = DefaultRouter()
+router.register(r'producto', ProductoViewSet, basename='producto')
+router.register(r'stock', StockViewSet, basename='stock')
+router.register(r'proveedor', ProveedorViewSet, basename='proveedor')
+router.register(r'servicio', ServicioViewSet, basename='servicio')
+
+urlpatterns = router.urls

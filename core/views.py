@@ -22,6 +22,7 @@ class ApiInfoView(APIView):
                     "cliente": "/api/cliente/",
                     "proveedor": "/api/proveedor/",
                     "producto": "/api/producto/",
+                    "servicio": "/api/servicio/",
                     "stock": "/api/stock/",
                     "atendente": "/api/atendente/",
                     "reserva": "/api/reserva/",

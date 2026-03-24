@@ -4,9 +4,12 @@ from .models import Reserva, HistorialReserva
 
 @admin.register(Reserva)
 class ReservaAdmin(admin.ModelAdmin):
-    list_display = ('id', 'cliente', 'servicio', 'fecha', 'hora', 'estado', 'atendente')
-    search_fields = ('cliente__nombre', 'cliente__apellido', 'servicio')
-    list_filter = ('estado', 'fecha')
+    list_display = (
+        'id', 'cliente', 'servicio', 'fecha', 'hora', 'estado', 'atendente',
+        'recordatorio_enviado'
+    )
+    search_fields = ('cliente__nombre', 'cliente__apellido', 'servicio__nombre')
+    list_filter = ('estado', 'fecha', 'recordatorio_enviado')
 
 
 @admin.register(HistorialReserva)

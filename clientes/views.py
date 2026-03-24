@@ -1,13 +1,8 @@
-from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIView
+from rest_framework.viewsets import ModelViewSet
 from .models import Cliente
 from .serializers import ClienteSerializer
 
 
-class ClienteList(ListCreateAPIView):
-    queryset = Cliente.objects.all()
-    serializer_class = ClienteSerializer
-
-
-class ClienteDetail(RetrieveUpdateDestroyAPIView):
+class ClienteViewSet(ModelViewSet):
     queryset = Cliente.objects.all()
     serializer_class = ClienteSerializer

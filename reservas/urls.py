@@ -1,12 +1,8 @@
-from django.urls import path
-from .views import (
-    ReservaList, ReservaDetail,
-    HistorialReservaList, HistorialReservaDetail
-)
+from rest_framework.routers import DefaultRouter
+from .views import ReservaViewSet, HistorialReservaViewSet
 
-urlpatterns = [
-    path('reserva/', ReservaList.as_view(), name='reserva-list'),
-    path('reserva/<int:pk>/', ReservaDetail.as_view(), name='reserva-detail'),
-    path('historial-reserva/', HistorialReservaList.as_view(), name='historial-reserva-list'),
-    path('historial-reserva/<int:pk>/', HistorialReservaDetail.as_view(), name='historial-reserva-detail'),
-]
+router = DefaultRouter()
+router.register(r'reserva', ReservaViewSet, basename='reserva')
+router.register(r'historial-reserva', HistorialReservaViewSet, basename='historial-reserva')
+
+urlpatterns = router.urls
