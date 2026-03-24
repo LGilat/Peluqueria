@@ -1,4 +1,5 @@
 from django.db import models
+from django.utils import timezone
 
 
 class Factura(models.Model):
@@ -33,7 +34,7 @@ class LineaFactura(models.Model):
 class Ingreso(models.Model):
     tipo = models.CharField(max_length=100)
     cantidad = models.DecimalField(max_digits=10, decimal_places=2)
-    fecha = models.DateTimeField(auto_now_add=True)
+    fecha = models.DateTimeField(default=timezone.now)
 
     def __str__(self):
         return f"Ingreso #{self.id} de tipo {self.tipo}"
@@ -45,7 +46,7 @@ class Ingreso(models.Model):
 class Gasto(models.Model):
     tipo = models.CharField(max_length=100)
     cantidad = models.DecimalField(max_digits=10, decimal_places=2)
-    fecha = models.DateTimeField(auto_now_add=True)
+    fecha = models.DateTimeField(default=timezone.now)
     proveedor = models.ForeignKey('inventario.Proveedor', on_delete=models.SET_NULL, blank=True, null=True)
 
     def __str__(self):

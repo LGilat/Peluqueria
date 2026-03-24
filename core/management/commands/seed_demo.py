@@ -34,10 +34,13 @@ class Command(BaseCommand):
             ("Cera Modeladora", "Acabado mate", "8.20", "3.60"),
         ]
         for nombre, descripcion, precio, costo in productos:
-            producto, _ = Producto.objects.get_or_create(
+            producto, created = Producto.objects.get_or_create(
                 nombre=nombre,
                 defaults={"descripcion": descripcion, "precio": precio, "costo": costo},
             )
+            if not created and (producto.costo is None or producto.costo == 0):
+                producto.costo = Decimal(costo)
+                producto.save(update_fields=['costo'])
             Stock.objects.get_or_create(
                 producto=producto,
                 proveedor=proveedor,
@@ -170,15 +173,19 @@ class Command(BaseCommand):
         for atendente in atendentes:
             AvisoDestinatario.objects.get_or_create(aviso=aviso, atendente=atendente)
 
+        # Limpiar datos financieros demo
+        Ingreso.objects.filter(fecha__year__in=[2025, 2026]).delete()
+        Gasto.objects.filter(fecha__year__in=[2025, 2026]).delete()
+
         # Datos financieros 2025-2026
         for year_ in [2025, 2026]:
             for month_ in range(1, 13):
-                Ingreso.objects.get_or_create(
+                Ingreso.objects.create(
                     tipo="Servicios",
                     cantidad=Decimal("4500.00") + Decimal(month_ * 50),
                     fecha=timezone.datetime(year_, month_, 5, tzinfo=timezone.get_current_timezone()),
                 )
-                Ingreso.objects.get_or_create(
+                Ingreso.objects.create(
                     tipo="Productos",
                     cantidad=Decimal("1200.00") + Decimal(month_ * 30),
                     fecha=timezone.datetime(year_, month_, 15, tzinfo=timezone.get_current_timezone()),
@@ -187,7 +194,7 @@ class Command(BaseCommand):
                 # Gastos basados en compras (simulacion)
                 for stock in Stock.objects.select_related('producto'):
                     compra_cantidad = 10 + (month_ % 3) * 5
-                    Gasto.objects.get_or_create(
+                    Gasto.objects.create(
                         tipo=f"Compra {stock.producto.nombre}",
                         cantidad=(compra_cantidad * stock.producto.costo),
                         fecha=timezone.datetime(year_, month_, 2, tzinfo=timezone.get_current_timezone()),
