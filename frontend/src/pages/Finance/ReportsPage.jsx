@@ -107,6 +107,18 @@ const ReportsPage = () => {
   const totalGastos = gastosFiltrados.reduce((sum, g) => sum + parseFloat(g.cantidad), 0);
   const balance = totalIngresos - totalGastos;
 
+  const ivaIngresos = ingresosFiltrados.reduce((sum, i) => {
+    const tax = computeTax(i.cantidad, i.iva_porcentaje, i.iva_incluido);
+    return sum + tax.iva;
+  }, 0);
+
+  const ivaGastos = gastosFiltrados.reduce((sum, g) => {
+    const tax = computeTax(g.cantidad, g.iva_porcentaje, g.iva_incluido);
+    return sum + tax.iva;
+  }, 0);
+
+  const ivaNeto = ivaIngresos - ivaGastos;
+
   if (loading) {
     return <div className="loading">Cargando reportes...</div>;
   }
@@ -156,6 +168,24 @@ const ReportsPage = () => {
               </div>
             );
           })}
+        </div>
+      </div>
+
+      <div className="card" style={{ marginTop: '16px' }}>
+        <div className="card-header"><strong>IVA</strong></div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px' }}>
+          <div className="card" style={{ padding: '12px' }}>
+            <p style={{ color: '#7f8c8d' }}>IVA repercutido (ventas)</p>
+            <strong>${ivaIngresos.toFixed(2)}</strong>
+          </div>
+          <div className="card" style={{ padding: '12px' }}>
+            <p style={{ color: '#7f8c8d' }}>IVA soportado (gastos)</p>
+            <strong>${ivaGastos.toFixed(2)}</strong>
+          </div>
+          <div className="card" style={{ padding: '12px' }}>
+            <p style={{ color: '#7f8c8d' }}>IVA neto</p>
+            <strong>${ivaNeto.toFixed(2)}</strong>
+          </div>
         </div>
       </div>
 
