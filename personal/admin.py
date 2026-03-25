@@ -16,8 +16,8 @@ class AtendenteAdmin(admin.ModelAdmin):
 
 @admin.register(NominaMensual)
 class NominaMensualAdmin(admin.ModelAdmin):
-    list_display = ('id', 'atendente', 'month', 'year', 'salario_base', 'total')
-    list_filter = ('year', 'month')
+    list_display = ('id', 'atendente', 'month', 'year', 'estado', 'total', 'total_neto', 'fecha_pago')
+    list_filter = ('year', 'month', 'estado')
     inlines = [NominaItemInline]
 
 

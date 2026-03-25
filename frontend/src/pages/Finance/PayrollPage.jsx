@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import axiosClient from '../../api/axiosClient';
 import Table from '../../components/common/Table';
 import Modal from '../../components/common/Modal';
@@ -9,7 +9,7 @@ const PayrollPage = () => {
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentPayroll, setCurrentPayroll] = useState(null);
-  const [filters, setFilters] = useState({ month: '', year: '' });
+  const [filters, setFilters] = useState({ month: '', year: '', atendente: '', estado: '' });
   const [formData, setFormData] = useState({
     atendente: '',
     year: new Date().getFullYear(),
@@ -17,7 +17,12 @@ const PayrollPage = () => {
     salario_base: '',
     comision_fija_total: '',
     comision_porcentaje_total: '',
-    otros: ''
+    otros: '',
+    deducciones: '',
+    retencion_irpf: '',
+    seguridad_social: '',
+    estado: 'pendiente',
+    fecha_pago: ''
   });
   const [detailItems, setDetailItems] = useState([]);
 
@@ -70,7 +75,12 @@ const PayrollPage = () => {
         salario_base: payroll.salario_base,
         comision_fija_total: payroll.comision_fija_total,
         comision_porcentaje_total: payroll.comision_porcentaje_total,
-        otros: payroll.otros
+        otros: payroll.otros,
+        deducciones: payroll.deducciones,
+        retencion_irpf: payroll.retencion_irpf,
+        seguridad_social: payroll.seguridad_social,
+        estado: payroll.estado || 'pendiente',
+        fecha_pago: payroll.fecha_pago || ''
       });
       fetchItems(payroll.id);
     } else {
@@ -83,7 +93,12 @@ const PayrollPage = () => {
         salario_base: '',
         comision_fija_total: '',
         comision_porcentaje_total: '',
-        otros: ''
+        otros: '',
+        deducciones: '',
+        retencion_irpf: '',
+        seguridad_social: '',
+        estado: 'pendiente',
+        fecha_pago: ''
       });
     }
     setIsModalOpen(true);
@@ -98,11 +113,19 @@ const PayrollPage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+      const normalizeDecimal = (value) => (value === '' || value === null ? 0 : value);
       const payload = {
         ...formData,
         atendente: parseInt(formData.atendente, 10),
         year: parseInt(formData.year, 10),
-        month: parseInt(formData.month, 10)
+        month: parseInt(formData.month, 10),
+        salario_base: normalizeDecimal(formData.salario_base),
+        comision_fija_total: normalizeDecimal(formData.comision_fija_total),
+        comision_porcentaje_total: normalizeDecimal(formData.comision_porcentaje_total),
+        otros: normalizeDecimal(formData.otros),
+        deducciones: normalizeDecimal(formData.deducciones),
+        retencion_irpf: normalizeDecimal(formData.retencion_irpf),
+        seguridad_social: normalizeDecimal(formData.seguridad_social)
       };
 
       if (currentPayroll) {
@@ -144,13 +167,70 @@ const PayrollPage = () => {
     }
   };
 
+  const handleMarkPaid = async (payroll) => {
+    try {
+      await axiosClient.post(`/nomina/${payroll.id}/marcar_pagada/`, {
+        fecha_pago: payroll.fecha_pago || new Date().toISOString().slice(0, 10),
+      });
+      fetchData();
+    } catch (error) {
+      console.error('Error marking payroll paid:', error);
+      alert('Error al marcar nómina como pagada.');
+    }
+  };
+
   const staffById = new Map(staff.map((s) => [s.id, s]));
+  const formatMoney = (value) => parseFloat(value || 0).toFixed(2);
 
   const filteredPayrolls = payrolls.filter((p) => {
     if (filters.month && String(p.month) !== String(filters.month)) return false;
     if (filters.year && String(p.year) !== String(filters.year)) return false;
+    if (filters.atendente && String(p.atendente) !== String(filters.atendente)) return false;
+    if (filters.estado && String(p.estado) !== String(filters.estado)) return false;
     return true;
   });
+
+  const resumenPorEmpleado = useMemo(() => {
+    const map = new Map();
+    filteredPayrolls.forEach((p) => {
+      const prev = map.get(p.atendente) || { total: 0, count: 0, comisiones: 0 };
+      const total = parseFloat(p.total || 0);
+      const comisiones = parseFloat(p.comision_fija_total || 0) + parseFloat(p.comision_porcentaje_total || 0);
+      map.set(p.atendente, {
+        total: prev.total + total,
+        count: prev.count + 1,
+        comisiones: prev.comisiones + comisiones
+      });
+    });
+    return Array.from(map.entries()).map(([id, val]) => ({ id, ...val }));
+  }, [filteredPayrolls]);
+
+  const resumenGlobal = useMemo(() => {
+    return filteredPayrolls.reduce(
+      (acc, p) => {
+        const comisiones = parseFloat(p.comision_fija_total || 0) + parseFloat(p.comision_porcentaje_total || 0);
+        const deducciones =
+          parseFloat(p.deducciones || 0)
+          + parseFloat(p.retencion_irpf || 0)
+          + parseFloat(p.seguridad_social || 0);
+        const total = parseFloat(p.total || 0);
+        const neto = parseFloat(p.total_neto || 0);
+        if (p.estado === 'pendiente') acc.pendientes += 1;
+        acc.total += total;
+        acc.neto += neto;
+        acc.comisiones += comisiones;
+        acc.deducciones += deducciones;
+        return acc;
+      },
+      {
+        total: 0,
+        neto: 0,
+        comisiones: 0,
+        deducciones: 0,
+        pendientes: 0
+      }
+    );
+  }, [filteredPayrolls]);
 
   const columns = [
     {
@@ -163,10 +243,30 @@ const PayrollPage = () => {
     },
     { key: 'month', header: 'Mes' },
     { key: 'year', header: 'Año' },
-    { key: 'salario_base', header: 'Base' },
-    { key: 'comision_fija_total', header: 'Comisión fija' },
-    { key: 'comision_porcentaje_total', header: 'Comisión %' },
-    { key: 'total', header: 'Total' }
+    { key: 'salario_base', header: 'Base', render: (value) => formatMoney(value) },
+    { key: 'comision_fija_total', header: 'Comisión fija', render: (value) => formatMoney(value) },
+    { key: 'comision_porcentaje_total', header: 'Comisión %', render: (value) => formatMoney(value) },
+    { key: 'total', header: 'Total', render: (value) => formatMoney(value) },
+    { key: 'total_neto', header: 'Neto', render: (value) => formatMoney(value) },
+    {
+      key: 'estado',
+      header: 'Estado',
+      render: (value, row) => (
+        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+          <span>{value === 'pagada' ? 'Pagada' : 'Pendiente'}</span>
+          {value !== 'pagada' && (
+            <button className="btn btn-secondary btn-sm" onClick={() => handleMarkPaid(row)}>
+              Marcar pagada
+            </button>
+          )}
+        </div>
+      )
+    },
+    {
+      key: 'fecha_pago',
+      header: 'Fecha pago',
+      render: (value) => value || '-'
+    }
   ];
 
   if (loading) {
@@ -187,6 +287,39 @@ const PayrollPage = () => {
         </div>
       </div>
 
+      <div className="card" style={{ marginBottom: '16px' }}>
+        <div className="card-header"><strong>Resumen por empleado</strong></div>
+        <div className="item-list">
+          {resumenPorEmpleado.length === 0 ? (
+            <p style={{ padding: '20px', color: '#7f8c8d' }}>Sin nóminas.</p>
+          ) : (
+            resumenPorEmpleado.map((r) => {
+              const person = staffById.get(r.id);
+              return (
+                <div key={r.id} className="item-row" style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr' }}>
+                  <span>{person ? `${person.nombre} ${person.apellido}` : 'N/A'}</span>
+                  <span>Total: ${r.total.toFixed(2)}</span>
+                  <span>Comisiones: ${r.comisiones.toFixed(2)}</span>
+                </div>
+              );
+            })
+          )}
+        </div>
+      </div>
+
+      <div className="card" style={{ marginBottom: '16px' }}>
+        <div className="card-header"><strong>Resumen del periodo</strong></div>
+        <div className="item-list">
+          <div className="item-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr 1fr' }}>
+            <span>Total bruto: ${resumenGlobal.total.toFixed(2)}</span>
+            <span>Total neto: ${resumenGlobal.neto.toFixed(2)}</span>
+            <span>Comisiones: ${resumenGlobal.comisiones.toFixed(2)}</span>
+            <span>Deducciones: ${resumenGlobal.deducciones.toFixed(2)}</span>
+            <span>Pendientes: {resumenGlobal.pendientes}</span>
+          </div>
+        </div>
+      </div>
+
       <div className="card">
         <div className="card-header" style={{ display: 'flex', gap: '10px' }}>
           <select name="month" className="form-input" value={filters.month} onChange={handleFilterChange}>
@@ -194,6 +327,29 @@ const PayrollPage = () => {
             {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => (
               <option key={m} value={m}>{m}</option>
             ))}
+          </select>
+          <select
+            name="atendente"
+            className="form-input"
+            value={filters.atendente || ''}
+            onChange={handleFilterChange}
+          >
+            <option value="">Atendente</option>
+            {staff.map((member) => (
+              <option key={member.id} value={member.id}>
+                {member.nombre} {member.apellido}
+              </option>
+            ))}
+          </select>
+          <select
+            name="estado"
+            className="form-input"
+            value={filters.estado || ''}
+            onChange={handleFilterChange}
+          >
+            <option value="">Estado</option>
+            <option value="pendiente">Pendiente</option>
+            <option value="pagada">Pagada</option>
           </select>
           <input
             type="number"
@@ -313,6 +469,81 @@ const PayrollPage = () => {
                 className="form-input"
               />
             </div>
+          </div>
+
+          <div className="form-row">
+            <div className="form-group">
+              <label>Deducciones</label>
+              <input
+                type="number"
+                name="deducciones"
+                value={formData.deducciones}
+                onChange={handleInputChange}
+                step="0.01"
+                className="form-input"
+              />
+            </div>
+            <div className="form-group">
+              <label>Retención IRPF</label>
+              <input
+                type="number"
+                name="retencion_irpf"
+                value={formData.retencion_irpf}
+                onChange={handleInputChange}
+                step="0.01"
+                className="form-input"
+              />
+            </div>
+          </div>
+
+          <div className="form-row">
+            <div className="form-group">
+              <label>Seguridad Social</label>
+              <input
+                type="number"
+                name="seguridad_social"
+                value={formData.seguridad_social}
+                onChange={handleInputChange}
+                step="0.01"
+                className="form-input"
+              />
+            </div>
+            <div className="form-group">
+              <label>Estado</label>
+              <select
+                name="estado"
+                value={formData.estado}
+                onChange={handleInputChange}
+                className="form-input"
+              >
+                <option value="pendiente">Pendiente</option>
+                <option value="pagada">Pagada</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="form-row">
+            <div className="form-group">
+              <label>Fecha de pago</label>
+              <input
+                type="date"
+                name="fecha_pago"
+                value={formData.fecha_pago || ''}
+                onChange={handleInputChange}
+                className="form-input"
+              />
+            </div>
+            {currentPayroll && (
+              <div className="form-group">
+                <label>Total neto</label>
+                <input
+                  type="text"
+                  value={parseFloat(currentPayroll.total_neto || 0).toFixed(2)}
+                  className="form-input"
+                  readOnly
+                />
+              </div>
+            )}
           </div>
 
           {currentPayroll && detailItems.length > 0 && (

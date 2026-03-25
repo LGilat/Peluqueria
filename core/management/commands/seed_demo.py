@@ -150,6 +150,7 @@ class Command(BaseCommand):
         month = now.month
         year = now.year
         for atendente in atendentes:
+            is_pagada = atendente.id % 2 == 0
             nomina, _ = NominaMensual.objects.get_or_create(
                 atendente=atendente,
                 year=year,
@@ -159,6 +160,11 @@ class Command(BaseCommand):
                     "comision_fija_total": Decimal("150.00"),
                     "comision_porcentaje_total": Decimal("220.00"),
                     "otros": Decimal("50.00"),
+                    "deducciones": Decimal("75.00"),
+                    "retencion_irpf": Decimal("120.00"),
+                    "seguridad_social": Decimal("85.00"),
+                    "estado": "pagada" if is_pagada else "pendiente",
+                    "fecha_pago": now.date() if is_pagada else None,
                 },
             )
             if not nomina.items.exists():

@@ -27,6 +27,18 @@ class NominaMensualViewSet(ModelViewSet):
     queryset = NominaMensual.objects.all()
     serializer_class = NominaMensualSerializer
 
+    @action(detail=True, methods=['post'])
+    def marcar_pagada(self, request, pk=None):
+        nomina = self.get_object()
+        fecha_pago = request.data.get('fecha_pago')
+        nomina.estado = 'pagada'
+        if fecha_pago:
+            nomina.fecha_pago = fecha_pago
+        else:
+            nomina.fecha_pago = date.today()
+        nomina.save(update_fields=['estado', 'fecha_pago', 'total', 'total_neto'])
+        return Response(NominaMensualSerializer(nomina).data)
+
     @action(detail=False, methods=['post'])
     def recalcular(self, request):
         year = int(request.data.get('year', date.today().year))

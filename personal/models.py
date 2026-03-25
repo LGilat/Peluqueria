@@ -25,6 +25,11 @@ class Atendente(models.Model):
 
 
 class NominaMensual(models.Model):
+    ESTADO_CHOICES = (
+        ('pendiente', 'Pendiente'),
+        ('pagada', 'Pagada'),
+    )
+
     atendente = models.ForeignKey(Atendente, on_delete=models.CASCADE, related_name='nominas')
     year = models.PositiveIntegerField()
     month = models.PositiveIntegerField()
@@ -32,7 +37,13 @@ class NominaMensual(models.Model):
     comision_fija_total = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal("0.00"))
     comision_porcentaje_total = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal("0.00"))
     otros = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal("0.00"))
+    deducciones = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal("0.00"))
+    retencion_irpf = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal("0.00"))
+    seguridad_social = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal("0.00"))
     total = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal("0.00"))
+    total_neto = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal("0.00"))
+    estado = models.CharField(max_length=20, choices=ESTADO_CHOICES, default='pendiente')
+    fecha_pago = models.DateField(blank=True, null=True)
     creado_en = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -45,6 +56,12 @@ class NominaMensual(models.Model):
             + (self.comision_fija_total or Decimal("0.00"))
             + (self.comision_porcentaje_total or Decimal("0.00"))
             + (self.otros or Decimal("0.00"))
+        )
+        self.total_neto = (
+            self.total
+            - (self.deducciones or Decimal("0.00"))
+            - (self.retencion_irpf or Decimal("0.00"))
+            - (self.seguridad_social or Decimal("0.00"))
         )
         super().save(*args, **kwargs)
 
