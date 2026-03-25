@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import axiosClient from '../../api/axiosClient';
 
+const PAGE_SIZE = 10;
+
 const computeTax = (amount, ivaPorcentaje, ivaIncluido) => {
   const rate = (parseFloat(ivaPorcentaje || 0) / 100) || 0;
   const total = parseFloat(amount || 0);
@@ -20,6 +22,10 @@ const ReportsPage = () => {
   const [gastos, setGastos] = useState([]);
   const [year, setYear] = useState(new Date().getFullYear());
   const [month, setMonth] = useState('');
+  const [ingresoCategoria, setIngresoCategoria] = useState('');
+  const [gastoCategoria, setGastoCategoria] = useState('');
+  const [pageIngresos, setPageIngresos] = useState(1);
+  const [pageGastos, setPageGastos] = useState(1);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -47,18 +53,20 @@ const ReportsPage = () => {
       const d = new Date(i.fecha);
       if (d.getFullYear() !== Number(year)) return false;
       if (month && d.getMonth() + 1 !== Number(month)) return false;
+      if (ingresoCategoria && i.categoria !== ingresoCategoria) return false;
       return true;
     });
-  }, [ingresos, year, month]);
+  }, [ingresos, year, month, ingresoCategoria]);
 
   const gastosFiltrados = useMemo(() => {
     return gastos.filter((g) => {
       const d = new Date(g.fecha);
       if (d.getFullYear() !== Number(year)) return false;
       if (month && d.getMonth() + 1 !== Number(month)) return false;
+      if (gastoCategoria && g.categoria !== gastoCategoria) return false;
       return true;
     });
-  }, [gastos, year, month]);
+  }, [gastos, year, month, gastoCategoria]);
 
   const monthlySummary = useMemo(() => {
     const map = new Map();
@@ -119,6 +127,23 @@ const ReportsPage = () => {
 
   const ivaNeto = ivaIngresos - ivaGastos;
 
+  const ingresoCategorias = Array.from(new Set(ingresos.map((i) => i.categoria || 'Otros')));
+  const gastoCategorias = Array.from(new Set(gastos.map((g) => g.categoria || 'Varios')));
+
+  const totalPagesIngresos = Math.max(1, Math.ceil(ingresosFiltrados.length / PAGE_SIZE));
+  const totalPagesGastos = Math.max(1, Math.ceil(gastosFiltrados.length / PAGE_SIZE));
+
+  const ingresosPaginados = ingresosFiltrados.slice((pageIngresos - 1) * PAGE_SIZE, pageIngresos * PAGE_SIZE);
+  const gastosPaginados = gastosFiltrados.slice((pageGastos - 1) * PAGE_SIZE, pageGastos * PAGE_SIZE);
+
+  useEffect(() => {
+    if (pageIngresos > totalPagesIngresos) setPageIngresos(totalPagesIngresos);
+  }, [pageIngresos, totalPagesIngresos]);
+
+  useEffect(() => {
+    if (pageGastos > totalPagesGastos) setPageGastos(totalPagesGastos);
+  }, [pageGastos, totalPagesGastos]);
+
   if (loading) {
     return <div className="loading">Cargando reportes...</div>;
   }
@@ -138,7 +163,11 @@ const ReportsPage = () => {
           <select
             className="form-input"
             value={month}
-            onChange={(e) => setMonth(e.target.value)}
+            onChange={(e) => {
+              setMonth(e.target.value);
+              setPageIngresos(1);
+              setPageGastos(1);
+            }}
             style={{ maxWidth: '140px' }}
           >
             <option value="">Mes (todos)</option>
@@ -225,7 +254,23 @@ const ReportsPage = () => {
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginTop: '16px' }}>
         <div className="card">
-          <div className="card-header"><strong>Ingresos (detalle)</strong></div>
+          <div className="card-header" style={{ display: 'flex', justifyContent: 'space-between' }}>
+            <strong>Ingresos (detalle)</strong>
+            <select
+              className="form-input"
+              value={ingresoCategoria}
+              onChange={(e) => {
+                setIngresoCategoria(e.target.value);
+                setPageIngresos(1);
+              }}
+              style={{ maxWidth: '200px' }}
+            >
+              <option value="">Todas</option>
+              {ingresoCategorias.map((cat) => (
+                <option key={cat} value={cat}>{cat}</option>
+              ))}
+            </select>
+          </div>
           <div className="item-list">
             <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr', padding: '10px 0', borderBottom: '2px solid var(--border-color)', fontWeight: '600', color: '#7f8c8d' }}>
               <span>Concepto</span>
@@ -233,7 +278,7 @@ const ReportsPage = () => {
               <span>IVA</span>
               <span>Total</span>
             </div>
-            {ingresosFiltrados.map((i) => {
+            {ingresosPaginados.map((i) => {
               const tax = computeTax(i.cantidad, i.iva_porcentaje, i.iva_incluido);
               return (
                 <div key={`ing-${i.id}`} className="item-row" style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr' }}>
@@ -248,10 +293,41 @@ const ReportsPage = () => {
               <p style={{ padding: '20px', color: '#7f8c8d' }}>Sin ingresos.</p>
             )}
           </div>
+          {ingresosFiltrados.length > 0 && (
+            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 0' }}>
+              <span style={{ color: '#7f8c8d' }}>
+                Página {pageIngresos} de {totalPagesIngresos}
+              </span>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <button className="btn btn-secondary" disabled={pageIngresos === 1} onClick={() => setPageIngresos(pageIngresos - 1)}>
+                  Anterior
+                </button>
+                <button className="btn btn-secondary" disabled={pageIngresos === totalPagesIngresos} onClick={() => setPageIngresos(pageIngresos + 1)}>
+                  Siguiente
+                </button>
+              </div>
+            </div>
+          )}
         </div>
 
         <div className="card">
-          <div className="card-header"><strong>Gastos (detalle)</strong></div>
+          <div className="card-header" style={{ display: 'flex', justifyContent: 'space-between' }}>
+            <strong>Gastos (detalle)</strong>
+            <select
+              className="form-input"
+              value={gastoCategoria}
+              onChange={(e) => {
+                setGastoCategoria(e.target.value);
+                setPageGastos(1);
+              }}
+              style={{ maxWidth: '200px' }}
+            >
+              <option value="">Todas</option>
+              {gastoCategorias.map((cat) => (
+                <option key={cat} value={cat}>{cat}</option>
+              ))}
+            </select>
+          </div>
           <div className="item-list">
             <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr', padding: '10px 0', borderBottom: '2px solid var(--border-color)', fontWeight: '600', color: '#7f8c8d' }}>
               <span>Concepto</span>
@@ -259,7 +335,7 @@ const ReportsPage = () => {
               <span>IVA</span>
               <span>Total</span>
             </div>
-            {gastosFiltrados.map((g) => {
+            {gastosPaginados.map((g) => {
               const tax = computeTax(g.cantidad, g.iva_porcentaje, g.iva_incluido);
               return (
                 <div key={`gas-${g.id}`} className="item-row" style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr' }}>
@@ -274,6 +350,21 @@ const ReportsPage = () => {
               <p style={{ padding: '20px', color: '#7f8c8d' }}>Sin gastos.</p>
             )}
           </div>
+          {gastosFiltrados.length > 0 && (
+            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 0' }}>
+              <span style={{ color: '#7f8c8d' }}>
+                Página {pageGastos} de {totalPagesGastos}
+              </span>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <button className="btn btn-secondary" disabled={pageGastos === 1} onClick={() => setPageGastos(pageGastos - 1)}>
+                  Anterior
+                </button>
+                <button className="btn btn-secondary" disabled={pageGastos === totalPagesGastos} onClick={() => setPageGastos(pageGastos + 1)}>
+                  Siguiente
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
