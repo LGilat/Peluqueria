@@ -209,6 +209,9 @@ MEDIA_ROOT = BASE_DIR / 'media'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+# Taxes (IVA)
+IVA_DEFAULT_PERCENT = 21.00
+
 
 # REST Framework Configuration
 REST_FRAMEWORK = {

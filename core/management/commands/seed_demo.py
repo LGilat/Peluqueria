@@ -182,20 +182,82 @@ class Command(BaseCommand):
             for month_ in range(1, 13):
                 Ingreso.objects.create(
                     tipo="Servicios",
-                    cantidad=Decimal("4500.00") + Decimal(month_ * 50),
+                    categoria="Servicios",
+                    subcategoria="Corte",
+                    cantidad=Decimal("2200.00") + Decimal(month_ * 20),
                     fecha=timezone.datetime(year_, month_, 5, tzinfo=timezone.get_current_timezone()),
                 )
                 Ingreso.objects.create(
+                    tipo="Servicios",
+                    categoria="Servicios",
+                    subcategoria="Color",
+                    cantidad=Decimal("2300.00") + Decimal(month_ * 30),
+                    fecha=timezone.datetime(year_, month_, 6, tzinfo=timezone.get_current_timezone()),
+                )
+                Ingreso.objects.create(
                     tipo="Productos",
+                    categoria="Productos",
+                    subcategoria="Ventas tienda",
                     cantidad=Decimal("1200.00") + Decimal(month_ * 30),
                     fecha=timezone.datetime(year_, month_, 15, tzinfo=timezone.get_current_timezone()),
                 )
+                Ingreso.objects.create(
+                    tipo="Otros",
+                    categoria="Otros",
+                    subcategoria="Bonos",
+                    cantidad=Decimal("300.00"),
+                    fecha=timezone.datetime(year_, month_, 20, tzinfo=timezone.get_current_timezone()),
+                )
 
-                # Gastos basados en compras (simulacion)
+                # Gastos fijos
+                Gasto.objects.create(
+                    tipo="Personal",
+                    categoria="Personal",
+                    subcategoria="Nominas",
+                    cantidad=Decimal("2200.00"),
+                    fecha=timezone.datetime(year_, month_, 1, tzinfo=timezone.get_current_timezone()),
+                    proveedor=proveedor,
+                )
+                Gasto.objects.create(
+                    tipo="Alquiler",
+                    categoria="Alquiler",
+                    subcategoria="Local",
+                    cantidad=Decimal("950.00"),
+                    fecha=timezone.datetime(year_, month_, 1, tzinfo=timezone.get_current_timezone()),
+                    proveedor=proveedor,
+                )
+                Gasto.objects.create(
+                    tipo="Suministros",
+                    categoria="Suministros",
+                    subcategoria="Luz/Agua",
+                    cantidad=Decimal("280.00"),
+                    fecha=timezone.datetime(year_, month_, 3, tzinfo=timezone.get_current_timezone()),
+                    proveedor=proveedor,
+                )
+                Gasto.objects.create(
+                    tipo="Marketing",
+                    categoria="Marketing",
+                    subcategoria="Redes",
+                    cantidad=Decimal("150.00"),
+                    fecha=timezone.datetime(year_, month_, 7, tzinfo=timezone.get_current_timezone()),
+                    proveedor=proveedor,
+                )
+                Gasto.objects.create(
+                    tipo="Varios",
+                    categoria="Varios",
+                    subcategoria="Misc",
+                    cantidad=Decimal("90.00"),
+                    fecha=timezone.datetime(year_, month_, 10, tzinfo=timezone.get_current_timezone()),
+                    proveedor=proveedor,
+                )
+
+                # Gastos basados en compras (COGS)
                 for stock in Stock.objects.select_related('producto'):
                     compra_cantidad = 10 + (month_ % 3) * 5
                     Gasto.objects.create(
                         tipo=f"Compra {stock.producto.nombre}",
+                        categoria="Productos vendidos (COGS)",
+                        subcategoria=stock.producto.nombre,
                         cantidad=(compra_cantidad * stock.producto.costo),
                         fecha=timezone.datetime(year_, month_, 2, tzinfo=timezone.get_current_timezone()),
                         proveedor=proveedor,
