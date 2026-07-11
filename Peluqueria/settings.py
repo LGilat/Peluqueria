@@ -27,7 +27,7 @@ SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'django-insecure-w$mld%yd-%h8d9+mvdo
 DEBUG = os.getenv('DJANGO_DEBUG', 'True') == 'True'
 
 # Configuración de hosts permitidos
-ALLOWED_HOSTS = os.getenv('DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1','peluqueria-ap.onrender.com').split(',')
+ALLOWED_HOSTS = os.getenv('DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1,peluqueria-ap.onrender.com').split(',')
 
 
 # Application definition
