@@ -1,0 +1,24 @@
+# Configuración para Render (https://render.com)
+# Este archivo define cómo desplegar la aplicación en Render.
+
+services:
+  - type: web
+    name: peluqueria-api
+    runtime: python
+    buildCommand: |
+      pip install -r requirements.txt
+      python manage.py migrate
+      python manage.py collectstatic --noinput
+    startCommand: gunicorn Peluqueria.wsgi:application --bind 0.0.0.0:$PORT
+    envVars:
+      - key: DJANGO_SECRET_KEY
+        value: ${DJANGO_SECRET_KEY}
+      - key: DJANGO_DEBUG
+        value: "False"
+      - key: DJANGO_ALLOWED_HOSTS
+        value: "*"
+      - key: PORT
+        value: "8000"
+    autoDeploy: true
+    region: frankfurt
+    plan: free
