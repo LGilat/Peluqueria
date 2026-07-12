@@ -12,11 +12,11 @@ gunicorn==22.0.0
 # Base de datos (opcional para PostgreSQL)
 # psycopg2-binary==2.9.9
 
-# Autenticación JWT (opcional)
-# djangorestframework-simplejwt==5.3.1
+# Autenticación JWT
+djangorestframework-simplejwt==5.3.1
 
-# Variables de entorno (opcional)
-# python-dotenv==1.0.1
+# Variables de entorno
+python-dotenv==1.0.1
 
 # Para producción (opcional)
-# whitenoise==6.6.0
+whitenoise==6.6.0
