@@ -80,3 +80,4 @@ dmypy.json
 *.png
 *.gif
 *.svg
+frontend/
