@@ -78,7 +78,11 @@ WSGI_APPLICATION = 'Peluqueria.wsgi.application'
 
 # CORS Configuration
 CORS_ORIGIN_ALLOW_ALL = os.getenv('CORS_ORIGIN_ALLOW_ALL', 'False') == 'True'
-CORS_ORIGIN_WHITELIST = os.getenv('CORS_ORIGIN_WHITELIST', 'http://localhost:5173,http://127.0.0.1:5173').split(',')
+CORS_ALLOWED_ORIGINS = os.getenv(
+    'CORS_ALLOWED_ORIGINS',
+    'http://localhost:5173,http://127.0.0.1:5173,https://frontpeluqueria.netlify.app'
+).split(',')
+
 CORS_ALLOW_METHODS = [
     'GET',
     'POST',
