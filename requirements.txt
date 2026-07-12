@@ -1,5 +1,5 @@
 # Django y dependencias principales
-Django==6.0.7
+Django==5.0.7
 djangorestframework==3.17.1
 django-cors-headers==4.9.0
 
